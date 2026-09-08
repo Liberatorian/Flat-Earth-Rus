@@ -185,16 +185,37 @@ object GleasonMapData {
         val path = Path()
         if (points.isEmpty()) return path
 
-        for (i in points.indices) {
-            val pt = points[i]
-            val (xKm, yKm) = CelestialEngine.geoToDiscKm(pt.lat, pt.lon, projection)
-            val px = centerX + (xKm / FlatEarthConstants.DISC_RADIUS_KM * discRadiusPx).toFloat()
-            val py = centerY + (yKm / FlatEarthConstants.DISC_RADIUS_KM * discRadiusPx).toFloat()
-            if (i == 0) {
-                path.moveTo(px, py)
-            } else {
-                path.lineTo(px, py)
-            }
+        val projected = points.map { point ->
+            val (xKm, yKm) = CelestialEngine.geoToDiscKm(point.lat, point.lon, projection)
+            Offset(
+                centerX + (xKm / FlatEarthConstants.DISC_RADIUS_KM * discRadiusPx).toFloat(),
+                centerY + (yKm / FlatEarthConstants.DISC_RADIUS_KM * discRadiusPx).toFloat()
+            )
+        }
+        if (projected.size == 1) {
+            path.moveTo(projected[0].x, projected[0].y)
+            return path
+        }
+
+        // Midpoint quadratic smoothing keeps the rough demo coastline readable
+        // without changing its projected geographic anchor points.
+        fun midpoint(first: Offset, second: Offset) = Offset(
+            (first.x + second.x) * 0.5f,
+            (first.y + second.y) * 0.5f
+        )
+
+        val firstMidpoint = midpoint(projected.last(), projected.first())
+        path.moveTo(firstMidpoint.x, firstMidpoint.y)
+        for (i in projected.indices) {
+            val current = projected[i]
+            val next = projected[(i + 1) % projected.size]
+            val nextMidpoint = midpoint(current, next)
+            path.quadraticTo(
+                current.x,
+                current.y,
+                nextMidpoint.x,
+                nextMidpoint.y
+            )
         }
         path.close()
         return path

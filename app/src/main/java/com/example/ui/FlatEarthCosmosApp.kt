@@ -86,6 +86,7 @@ fun FlatEarthCosmosApp(
                         state = state,
                         onCameraDelta = { az, el, zoom -> viewModel.updateObserverCamera(az, el, zoom) },
                         onToggleCompass = { viewModel.setCompassModeEnabled(!state.isCompassModeEnabled) },
+                        onToggleHud = { viewModel.setObserverHudVisible(!state.showObserverHud) },
                         onSetCamera = { az, el ->
                             val deltaAz = az - state.observerCamera.azimuthHeadingDeg
                             val deltaEl = el - state.observerCamera.elevationPitchDeg

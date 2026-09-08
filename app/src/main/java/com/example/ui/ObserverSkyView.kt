@@ -10,9 +10,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,6 +58,7 @@ fun ObserverSkyView(
     state: FlatEarthAppState,
     onCameraDelta: (azimuthDelta: Float, elevationDelta: Float, zoomDelta: Float) -> Unit,
     onToggleCompass: () -> Unit,
+    onToggleHud: () -> Unit,
     onSetCamera: (azimuth: Float, elevation: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -179,15 +187,16 @@ fun ObserverSkyView(
             )
         }
 
-        // Top-left Observer info overlay
-        Surface(
-            color = Color(0x770F172A),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(12.dp)
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+        // Compact HUD can be hidden to leave the sky unobstructed.
+        if (state.showObserverHud) {
+            Surface(
+                color = Color(0x770F172A),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                 Text(
                     text = "ВИД С ТВЕРДИ • ${state.observerLocation.nameRu}",
                     color = Color(0xFF38BDF8),
@@ -228,7 +237,19 @@ fun ObserverSkyView(
                         fontSize = 9.sp
                     )
                 }
+                }
             }
+        }
+
+        IconButton(
+            onClick = onToggleHud,
+            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
+        ) {
+            Icon(
+                imageVector = if (state.showObserverHud) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                contentDescription = if (state.showObserverHud) "Скрыть данные" else "Показать данные",
+                tint = Color(0xFFBAE6FD)
+            )
         }
 
         // Quick Compass Look Direction Buttons at bottom of view
@@ -236,8 +257,9 @@ fun ObserverSkyView(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             QuickLookChip(label = "Север (0°)", active = state.observerCamera.azimuthHeadingDeg in 345f..360f || state.observerCamera.azimuthHeadingDeg in 0f..15f) {
                 onSetCamera(0f, 45f)

@@ -57,7 +57,9 @@ private class CompassSensorController(
         SensorManager.getOrientation(rotationMatrix, orientation)
 
         val azimuth = ((orientation[0] * 180f / PI.toFloat()) + 360f) % 360f
-        val pitch = (orientation[1] * 180f / PI.toFloat()).coerceIn(-90f, 90f)
+        // Android's positive pitch points opposite to the camera tilt expected
+        // by the sky view: lowering the phone must lower the horizon.
+        val pitch = (-orientation[1] * 180f / PI.toFloat()).coerceIn(-90f, 90f)
         onOrientationChanged(azimuth, pitch.coerceAtLeast(0f))
     }
 
