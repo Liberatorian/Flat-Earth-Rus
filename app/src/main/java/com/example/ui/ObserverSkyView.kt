@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -259,9 +260,9 @@ private fun DrawScope.drawElevationGrid(
             centerX - skyRadius,
             centerY + (sin(lookElRad) * skyRadius).toFloat() - (cos(lookElRad) * skyRadius).toFloat()
         ),
-        bottomRight = Offset(
-            centerX + skyRadius,
-            centerY + (sin(lookElRad) * skyRadius).toFloat() + (cos(lookElRad) * skyRadius).toFloat()
+        size = Size(
+            width = skyRadius * 2,
+            height = (cos(lookElRad) * skyRadius * 2).toFloat()
         ),
         style = Stroke(width = 2.0f)
     )
@@ -279,7 +280,7 @@ private fun DrawScope.drawElevationGrid(
         drawOval(
             color = Color(0x2538BDF8),
             topLeft = Offset(centerX - horizontalRadius, ringCenterY - verticalRadius),
-            bottomRight = Offset(centerX + horizontalRadius, ringCenterY + verticalRadius),
+            size = Size(horizontalRadius * 2, verticalRadius * 2),
             style = Stroke(width = 1.0f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
         )
     }
