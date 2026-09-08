@@ -109,15 +109,7 @@ fun Dome3DView(
                 )
             )
 
-            // 1. Draw Star Canopy on the Crystalline Firmament Dome
-            if (state.layers.showStarsAndConstellations) {
-                drawStarDome(
-                    state = state,
-                    project = ::project3D
-                )
-            }
-
-            // 2. Draw Transparent Crystalline Firmament Dome (Glass Arcs & Zenith Apex)
+            // 1. Draw Transparent Crystalline Firmament Dome
             if (state.layers.showFirmamentGlow) {
                 drawCrystallineDome(
                     project = ::project3D
@@ -132,10 +124,18 @@ fun Dome3DView(
                 baseRadius = baseRadius
             )
 
-            // 4. Draw Continents on the Disc
+            // 5. Draw Continents on the Disc
             drawContinents3D(
                 project = ::project3D
             )
+
+            // Draw stars after all surface layers so the external canopy remains readable.
+            if (state.layers.showStarsAndConstellations) {
+                drawStarDome(
+                    state = state,
+                    project = ::project3D
+                )
+            }
 
             // Keep the dome legible from above: its rim and ribs sit over the
             // surface outline so a top-down pitch does not hide the structure.
@@ -187,7 +187,7 @@ fun Dome3DView(
                 .padding(12.dp)
         ) {
             Text(
-                text = "3D КУПОЛ (СНАРУЖИ) • Наклон: ${state.camera3D.pitchDeg.toInt()}° • Азимут: ${state.camera3D.yawDeg.toInt()}°\nКупол: 5 500 км • Солнце: 4 800 км • Диск: 20 000 км",
+                text = "3D КУПОЛ (СНАРУЖИ) • Наклон: ${state.camera3D.pitchDeg.toInt()}° • Азимут: ${state.camera3D.yawDeg.toInt()}°\nКупол: 5 300–7 200 км • Солнце: 4 800 км • Диск: 20 000 км",
                 color = Color(0xFF94A3B8),
                 fontSize = 11.sp,
                 lineHeight = 15.sp,
@@ -636,23 +636,39 @@ private fun DrawScope.drawMoon3D(
         center = moonScreenPt
     )
 
-    // Moon Disc with Phase representation
+    // Moon disc with phase representation and a small procedural texture.
     val moonRadius = 8f
-    // Draw Dark Side base
     drawCircle(
         color = Color(0xFF1E293B),
         radius = moonRadius,
         center = moonScreenPt
     )
 
-    // Draw illuminated crescent or gibbous facing towards the Sun
     val phaseFrac = state.telemetry.moonPhaseFraction
-    if (phaseFrac > 0.05f) {
+    if (phaseFrac > 0.5f) {
         drawCircle(
-            color = MoonSilver,
+            color = Color(0xFFE2E8F0),
             radius = moonRadius * phaseFrac.coerceIn(0.2f, 1.0f),
             center = moonScreenPt
         )
+    } else if (phaseFrac > 0.05f) {
+        drawArc(
+            color = Color(0xFFE2E8F0),
+            startAngle = -90f,
+            sweepAngle = 180f * phaseFrac * 2f,
+            useCenter = true,
+            topLeft = Offset(moonScreenPt.x - moonRadius, moonScreenPt.y - moonRadius),
+            size = androidx.compose.ui.geometry.Size(moonRadius * 2f, moonRadius * 2f)
+        )
+    }
+    val craterColor = Color(0x55334155)
+    listOf(
+        Offset(-2.5f, -2.0f) to 1.1f,
+        Offset(2.2f, -1.0f) to 0.8f,
+        Offset(1.5f, 2.4f) to 1.0f,
+        Offset(-3.0f, 2.2f) to 0.6f
+    ).forEach { (offset, radius) ->
+        drawCircle(craterColor, radius, moonScreenPt + offset)
     }
 }
 

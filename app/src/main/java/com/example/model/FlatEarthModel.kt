@@ -20,8 +20,8 @@ object FlatEarthConstants {
     const val ANTARCTIC_CIRCLE_KM = 17400.0
 
     // Firmament / Celestial heights
-    const val DOME_ZENITH_HEIGHT_KM = 5500.0 // Theoretical height of firmament dome apex over North Pole
-    const val DOME_RIM_HEIGHT_KM = 500.0 // Dome boundary anchorage along Antarctic ice barrier
+    const val DOME_ZENITH_HEIGHT_KM = 7200.0 // Experimental apex height, above both luminaries
+    const val DOME_RIM_HEIGHT_KM = 5300.0 // Rim clearance above the 4,800 km Sun path
     const val ICE_WALL_HEIGHT_METERS = 75.0 // Average ice cliff elevation above ocean (~250 ft)
     const val SUN_ALTITUDE_KM = 4800.0 // Local Sun altitude above flat plane (~3000 miles)
     const val MOON_ALTITUDE_KM = 4750.0 // Local Moon altitude (~3000 miles)
@@ -31,13 +31,18 @@ object FlatEarthConstants {
     // Optics & Illumination
     const val SUN_SPOTLIGHT_RADIUS_KM = 9600.0 // Daytime spotlight illumination radius
     const val TWILIGHT_BUFFER_KM = 1800.0 // Penumbra / twilight transition zone
+
+    fun domeHeightAtRadiusKm(radiusNorm: Double): Double {
+        val radius = radiusNorm.coerceIn(0.0, 1.0)
+        return DOME_RIM_HEIGHT_KM + (DOME_ZENITH_HEIGHT_KM - DOME_RIM_HEIGHT_KM) * (1.0 - radius * radius)
+    }
 }
 
 data class DomePhysicalSettings(
     val sunAltitudeKm: Double = FlatEarthConstants.SUN_ALTITUDE_KM,
     val moonAltitudeKm: Double = FlatEarthConstants.MOON_ALTITUDE_KM,
     val domeZenithHeightKm: Double = FlatEarthConstants.DOME_ZENITH_HEIGHT_KM,
-    val iceWallHeightVisualKm: Double = 350.0, // Visual elevation exaggeration for 3D perspective
+    val iceWallHeightVisualKm: Double = 1200.0, // Visual-only wall thickness for exterior readability
     val sunSpotlightRadiusKm: Double = FlatEarthConstants.SUN_SPOTLIGHT_RADIUS_KM
 )
 

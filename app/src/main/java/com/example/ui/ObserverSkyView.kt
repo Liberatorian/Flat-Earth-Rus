@@ -78,14 +78,14 @@ fun ObserverSkyView(
             // 1. Dynamic Atmosphere background based on daylight & sun altitude
             val skyColors = when {
                 isDay && sunAlt > 25f -> listOf(
-                    Color(0xFF0284C7), // Bright Azure Zenith
-                    Color(0xFF38BDF8),
-                    Color(0xFFBAE6FD) // Bright Horizon
+                    Color(0xFF39A9E8), // bright daytime zenith
+                    Color(0xFF72D2F5),
+                    Color(0xFFE8F7FF) // bright horizon
                 )
                 isDay && sunAlt > 5f -> listOf(
-                    Color(0xFF0F172A),
-                    Color(0xFF1E3A8A),
-                    Color(0xFFF59E0B) // Golden Golden Hour
+                    Color(0xFF1D4F78),
+                    Color(0xFF5CA9D6),
+                    Color(0xFFF6B35A) // golden hour
                 )
                 isDay -> listOf(
                     Color(0xFF090D1A),
@@ -93,9 +93,9 @@ fun ObserverSkyView(
                     Color(0xFFEA580C) // Twilight Red Horizon
                 )
                 else -> listOf(
-                    Color(0xFF030712), // Deep Space Midnight
-                    Color(0xFF0B1229),
-                    Color(0xFF132042)
+                    Color(0xFF010207), // black night zenith
+                    Color(0xFF030611),
+                    Color(0xFF071426)
                 )
             }
 
@@ -547,7 +547,7 @@ private fun DrawScope.drawLocalMoon(
         center = pt
     )
 
-    // Moon disk
+    // Moon disk with the same phase model as the external view.
     val radiusPx = 10f
     drawCircle(
         color = Color(0xFF1E293B),
@@ -555,14 +555,30 @@ private fun DrawScope.drawLocalMoon(
         center = pt
     )
 
-    // Phase crescent
     val phaseFrac = state.telemetry.moonPhaseFraction
-    if (phaseFrac > 0.05f) {
+    if (phaseFrac > 0.5f) {
         drawCircle(
             color = MoonSilver,
             radius = radiusPx * phaseFrac.coerceIn(0.25f, 1.0f),
             center = pt
         )
+    } else if (phaseFrac > 0.05f) {
+        drawArc(
+            color = MoonSilver,
+            startAngle = -90f,
+            sweepAngle = 180f * phaseFrac * 2f,
+            useCenter = true,
+            topLeft = Offset(pt.x - radiusPx, pt.y - radiusPx),
+            size = Size(radiusPx * 2f, radiusPx * 2f)
+        )
+    }
+    listOf(
+        Offset(-3.0f, -2.0f) to 1.3f,
+        Offset(2.5f, -1.0f) to 1.0f,
+        Offset(1.4f, 2.5f) to 1.1f,
+        Offset(-2.6f, 2.2f) to 0.7f
+    ).forEach { (offset, craterRadius) ->
+        drawCircle(Color(0x55334155), craterRadius, pt + offset)
     }
 
     val paint = android.graphics.Paint().apply {

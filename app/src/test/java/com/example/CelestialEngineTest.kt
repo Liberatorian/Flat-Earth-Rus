@@ -3,6 +3,7 @@ package com.example
 import com.example.model.CelestialEngine
 import com.example.model.MapProjection
 import com.example.model.OpticsEngine
+import com.example.model.FlatEarthConstants
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -48,5 +49,15 @@ class CelestialEngineTest {
 
         assertTrue(kotlin.math.hypot(gleason.first, gleason.second) != kotlin.math.hypot(stereographic.first, stereographic.second))
         assertTrue(kotlin.math.hypot(gleason.first, gleason.second) != kotlin.math.hypot(orthographic.first, orthographic.second))
+    }
+
+    @Test
+    fun domeEnvelopeContainsSunAndMoonAtEveryDiscRadius() {
+        for (radius in 0..10) {
+            val radiusNorm = radius / 10.0
+            val domeHeight = FlatEarthConstants.domeHeightAtRadiusKm(radiusNorm)
+            assertTrue(domeHeight > FlatEarthConstants.SUN_ALTITUDE_KM)
+            assertTrue(domeHeight > FlatEarthConstants.MOON_ALTITUDE_KM)
+        }
     }
 }
