@@ -116,7 +116,9 @@ fun FlatEarthCosmosApp(
             if (state.showSettingsSheet) {
                 LayersBottomSheet(
                     layers = state.layers,
+                    projection = state.projection,
                     onToggleLayer = { viewModel.toggleLayer(it) },
+                    onProjectionChange = { viewModel.setProjection(it) },
                     onDismiss = { viewModel.setShowSettingsSheet(false) }
                 )
             }

@@ -1,6 +1,8 @@
 package com.example
 
 import com.example.model.CelestialEngine
+import com.example.model.MapProjection
+import com.example.model.OpticsEngine
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -26,5 +28,25 @@ class CelestialEngineTest {
 
         assertTrue(first >= 0.0 && first < 360.0)
         assertEquals(0.9856, advance, 0.01)
+    }
+
+    @Test
+    fun opticalPathReturnsSeparateObservedPositionAndFiniteAtmosphericDepth() {
+        val path = OpticsEngine.traceIncomingRay(12.0)
+
+        assertEquals(12.0, path.geometricAltitudeDeg, 0.0001)
+        assertTrue(path.observedAltitudeDeg.isFinite())
+        assertTrue(path.opticalThickness > 0.0)
+        assertTrue(path.pathSamples > 0)
+    }
+
+    @Test
+    fun selectableProjectionsProduceDifferentCoordinates() {
+        val gleason = CelestialEngine.geoToDiscKm(45.0, 30.0, MapProjection.GLEASON_AE)
+        val stereographic = CelestialEngine.geoToDiscKm(45.0, 30.0, MapProjection.STEREOGRAPHIC)
+        val orthographic = CelestialEngine.geoToDiscKm(45.0, 30.0, MapProjection.ORTHOGRAPHIC)
+
+        assertTrue(kotlin.math.hypot(gleason.first, gleason.second) != kotlin.math.hypot(stereographic.first, stereographic.second))
+        assertTrue(kotlin.math.hypot(gleason.first, gleason.second) != kotlin.math.hypot(orthographic.first, orthographic.second))
     }
 }

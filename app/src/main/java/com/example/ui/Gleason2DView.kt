@@ -124,7 +124,7 @@ fun Gleason2DView(
 
             // 4. Draw Continents on the Flat Disc
             for (continent in GleasonMapData.ALL_CONTINENTS) {
-                val path = GleasonMapData.polygonToPath(continent, centerX, centerY, discRadius)
+                val path = GleasonMapData.polygonToPath(continent, centerX, centerY, discRadius, state.projection)
                 drawPath(path = path, color = Color(0xFF1E3A2F))
                 drawPath(path = path, color = Color(0xFF34D399), style = Stroke(width = 1.4f))
             }

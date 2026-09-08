@@ -48,9 +48,11 @@ data class CelestialTelemetry(
     val observerDistanceToMoonKm: Double,
 
     // Observer Sky Angles (Altitude & Azimuth from perspective)
-    val sunApparentAltitudeDeg: Double, // Elevation above horizon
+    val sunGeometricAltitudeDeg: Double,
+    val sunApparentAltitudeDeg: Double, // Elevation above horizon after optical path
     val sunApparentAzimuthDeg: Double, // Compass bearing (0=N, 90=E, 180=S, 270=W)
     val sunApparentDiameterArcmin: Double,
+    val moonGeometricAltitudeDeg: Double,
     val moonApparentAltitudeDeg: Double,
     val moonApparentAzimuthDeg: Double,
     val moonApparentDiameterArcmin: Double,
@@ -76,8 +78,20 @@ object CelestialEngine {
      * Outer Rim (-90°S) -> r = 20,000 km
      */
     fun geoToDiscKm(lat: Double, lon: Double): Pair<Double, Double> {
+        return geoToDiscKm(lat, lon, MapProjection.GLEASON_AE)
+    }
+
+    fun geoToDiscKm(lat: Double, lon: Double, projection: MapProjection): Pair<Double, Double> {
         val colatitude = (90.0 - lat).coerceIn(0.0, 180.0)
-        val r = (colatitude / 180.0) * FlatEarthConstants.DISC_RADIUS_KM
+        val colatitudeRad = Math.toRadians(colatitude)
+        val r = when (projection) {
+            MapProjection.GLEASON_AE -> (colatitude / 180.0) * FlatEarthConstants.DISC_RADIUS_KM
+            MapProjection.STEREOGRAPHIC -> {
+                val normalized = kotlin.math.tan(colatitudeRad / 2.0) / kotlin.math.tan(Math.toRadians(89.0))
+                normalized.coerceIn(0.0, 1.0) * FlatEarthConstants.DISC_RADIUS_KM
+            }
+            MapProjection.ORTHOGRAPHIC -> sin(colatitudeRad) * FlatEarthConstants.DISC_RADIUS_KM
+        }
         val lonRad = Math.toRadians(lon)
         val x = r * sin(lonRad)
         val y = -r * cos(lonRad)
@@ -195,6 +209,8 @@ object CelestialEngine {
         // Law of perspective: tan(alt) = H / d_horiz
         val sunAltDeg = Math.toDegrees(atan2(physicalSettings.sunAltitudeKm, horizDistSunKm))
         val moonAltDeg = Math.toDegrees(atan2(physicalSettings.moonAltitudeKm, horizDistMoonKm))
+        val sunOpticalPath = OpticsEngine.traceIncomingRay(sunAltDeg)
+        val moonOpticalPath = OpticsEngine.traceIncomingRay(moonAltDeg)
 
         // Perspective Apparent Diameter: theta = 2 * atan(D / (2 * dist))
         val sunDiameterArcmin = 2.0 * atan2(FlatEarthConstants.SUN_DIAMETER_KM / 2.0, totalDistSunKm) * (180.0 / PI) * 60.0
@@ -266,10 +282,12 @@ object CelestialEngine {
             isObserverDaytime = isDaytime,
             observerDistanceToSunKm = totalDistSunKm,
             observerDistanceToMoonKm = totalDistMoonKm,
-            sunApparentAltitudeDeg = sunAltDeg,
+            sunGeometricAltitudeDeg = sunAltDeg,
+            sunApparentAltitudeDeg = sunOpticalPath.observedAltitudeDeg,
             sunApparentAzimuthDeg = sunAzimuthDeg,
             sunApparentDiameterArcmin = sunDiameterArcmin,
-            moonApparentAltitudeDeg = moonAltDeg,
+            moonGeometricAltitudeDeg = moonAltDeg,
+            moonApparentAltitudeDeg = moonOpticalPath.observedAltitudeDeg,
             moonApparentAzimuthDeg = moonAzimuthDeg,
             moonApparentDiameterArcmin = moonDiameterArcmin,
             starDomeRotationDeg = siderealRotationDeg.toFloat()

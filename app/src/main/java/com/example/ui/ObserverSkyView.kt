@@ -195,6 +195,25 @@ fun ObserverSkyView(
                     color = Color(0xFFE2E8F0),
                     fontSize = 11.sp
                 )
+                if (state.layers.showOpticalRays) {
+                    Text(
+                        text = "APPARENT OBSERVED • рефракция: ${if (state.layers.showScientificAssumptions) "параметрическая" else "выкл."}",
+                        color = Color(0xFF67E8F9),
+                        fontSize = 10.sp
+                    )
+                    Text(
+                        text = "Солнце: геом. ${String.format("%.2f°", state.telemetry.sunGeometricAltitudeDeg)} → видим. ${String.format("%.2f°", state.telemetry.sunApparentAltitudeDeg)}",
+                        color = Color(0xFFCBD5E1),
+                        fontSize = 10.sp
+                    )
+                }
+                if (state.layers.showScientificAssumptions) {
+                    Text(
+                        text = "Допущение: азимутальная равноудалённая проекция",
+                        color = Color(0xFFFBBF24),
+                        fontSize = 9.sp
+                    )
+                }
             }
         }
 

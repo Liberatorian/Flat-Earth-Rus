@@ -179,14 +179,15 @@ object GleasonMapData {
         points: List<GeoPoint>,
         centerX: Float,
         centerY: Float,
-        discRadiusPx: Float
+        discRadiusPx: Float,
+        projection: MapProjection = MapProjection.GLEASON_AE
     ): Path {
         val path = Path()
         if (points.isEmpty()) return path
 
         for (i in points.indices) {
             val pt = points[i]
-            val (xKm, yKm) = CelestialEngine.geoToDiscKm(pt.lat, pt.lon)
+            val (xKm, yKm) = CelestialEngine.geoToDiscKm(pt.lat, pt.lon, projection)
             val px = centerX + (xKm / FlatEarthConstants.DISC_RADIUS_KM * discRadiusPx).toFloat()
             val py = centerY + (yKm / FlatEarthConstants.DISC_RADIUS_KM * discRadiusPx).toFloat()
             if (i == 0) {

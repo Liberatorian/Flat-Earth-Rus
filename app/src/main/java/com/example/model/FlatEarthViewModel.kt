@@ -31,7 +31,9 @@ data class LayerSettings(
     val showStarsAndConstellations: Boolean = true,
     val showCityMarkers: Boolean = true,
     val showMagneticLines: Boolean = false,
-    val showFirmamentGlow: Boolean = true
+    val showFirmamentGlow: Boolean = true,
+    val showOpticalRays: Boolean = true,
+    val showScientificAssumptions: Boolean = true
 )
 
 data class Camera3D(

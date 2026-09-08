@@ -206,6 +206,12 @@ fun TelemetryDetailCard(
                                     fontFamily = FontFamily.Monospace
                                 )
                             }
+                            Text(
+                                text = "ОПТИКА: геом. Солнце h=${String.format("%.2f°", telemetry.sunGeometricAltitudeDeg)} → наблюд. h=${String.format("%.2f°", telemetry.sunApparentAltitudeDeg)}",
+                                color = Color(0xFF67E8F9),
+                                fontSize = 10.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
                         }
                     }
                 }

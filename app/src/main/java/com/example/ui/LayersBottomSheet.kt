@@ -29,12 +29,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.LayerSettings
+import com.example.model.MapProjection
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LayersBottomSheet(
     layers: LayerSettings,
+    projection: MapProjection,
     onToggleLayer: (LayerSettings.() -> LayerSettings) -> Unit,
+    onProjectionChange: (MapProjection) -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -80,6 +85,28 @@ fun LayersBottomSheet(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Проекция координатной сетки",
+                color = Color(0xFFF8FAFC),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Меняет преобразование latitude/longitude → x/y",
+                color = Color(0xFF94A3B8),
+                fontSize = 11.sp
+            )
+            Row(
+                modifier = Modifier.padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                ProjectionChip("AE", MapProjection.GLEASON_AE, projection, onProjectionChange)
+                ProjectionChip("Stereo", MapProjection.STEREOGRAPHIC, projection, onProjectionChange)
+                ProjectionChip("Ortho", MapProjection.ORTHOGRAPHIC, projection, onProjectionChange)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             LayerToggleRow(
                 label = "Координатная сетка диска (Меридианы 15°)",
@@ -130,9 +157,43 @@ fun LayersBottomSheet(
                 onCheckedChange = { onToggleLayer { copy(showFirmamentGlow = it) } }
             )
 
+            LayerToggleRow(
+                label = "Оптический путь наблюдения",
+                description = "Геометрический луч, рефракция и потеря контраста",
+                checked = layers.showOpticalRays,
+                onCheckedChange = { onToggleLayer { copy(showOpticalRays = it) } }
+            )
+
+            LayerToggleRow(
+                label = "Показывать допущения модели",
+                description = "Отмечает проекцию, масштабирование и нестандартную оптику",
+                checked = layers.showScientificAssumptions,
+                onCheckedChange = { onToggleLayer { copy(showScientificAssumptions = it) } }
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
+
+@Composable
+private fun ProjectionChip(
+    label: String,
+    value: MapProjection,
+    selected: MapProjection,
+    onSelect: (MapProjection) -> Unit
+) {
+    FilterChip(
+        selected = value == selected,
+        onClick = { onSelect(value) },
+        label = { Text(label, fontSize = 10.sp) },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = Color(0xFF0284C7),
+            selectedLabelColor = Color.White,
+            containerColor = Color(0x401E293B),
+            labelColor = Color(0xFFCBD5E1)
+        )
+    )
 }
 
 @Composable
