@@ -32,6 +32,16 @@ class CelestialEngineTest {
     }
 
     @Test
+    fun siderealDomeAdvancesAtAboutFifteenDegreesPerHour() {
+        val hour = 3_600_000L
+        val first = CelestialEngine.greenwichMeanSiderealTimeDegrees(0L)
+        val second = CelestialEngine.greenwichMeanSiderealTimeDegrees(hour)
+        val advance = (second - first + 360.0) % 360.0
+
+        assertEquals(15.041, advance, 0.01)
+    }
+
+    @Test
     fun opticalPathReturnsSeparateObservedPositionAndFiniteAtmosphericDepth() {
         val path = OpticsEngine.traceIncomingRay(12.0)
 

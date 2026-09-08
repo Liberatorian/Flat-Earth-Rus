@@ -491,7 +491,9 @@ private fun DrawScope.drawStarDome(
         val starRadNorm = ((90.0 - star.declinationDeg) / 180.0).coerceIn(0.0, 0.95)
 
         // Right ascension + sidereal dome rotation
-        val starHourAngle = (star.rightAscensionHours / 24.0 * 2.0 * PI) + rotationRad
+        // Apparent sidereal hour angle is LST - RA: the dome turns westward
+        // as sidereal time increases, matching the local Alt/Az calculation.
+        val starHourAngle = (star.rightAscensionHours / 24.0 * 2.0 * PI) - rotationRad
         val x = starRadNorm * sin(starHourAngle)
         val y = starRadNorm * cos(starHourAngle)
         val z = rimHeightNorm + (domeHeightNorm - rimHeightNorm) * (1.0 - starRadNorm * starRadNorm)
@@ -519,8 +521,8 @@ private fun DrawScope.drawStarDome(
     for (index in 0 until 180) {
         val angle = index * 2.3999632297
         val radial = 0.08 + ((index * 73) % 860) / 1000.0
-        val x = radial * sin(angle + rotationRad)
-        val y = radial * cos(angle + rotationRad)
+        val x = radial * sin(angle - rotationRad)
+        val y = radial * cos(angle - rotationRad)
         val z = rimHeightNorm + (domeHeightNorm - rimHeightNorm) * (1.0 - radial * radial)
         val pt = project(x, y, z)
         val radius = if (index % 17 == 0) 1.8f else 0.9f

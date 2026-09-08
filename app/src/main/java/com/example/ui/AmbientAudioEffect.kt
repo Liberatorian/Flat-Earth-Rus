@@ -6,6 +6,9 @@ import android.media.AudioTrack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import kotlin.math.PI
+import kotlin.math.sin
+import kotlin.random.Random
 
 @Composable
 fun AmbientAudioEffect(enabled: Boolean) {
@@ -17,7 +20,7 @@ fun AmbientAudioEffect(enabled: Boolean) {
     }
 }
 
-/** Original synthesized drone: no bundled recording and no external license. */
+/** Original synthesized ambient soundscape: no bundled recording and no external license. */
 private class ProceduralAmbientPlayer {
     private val sampleRate = 22_050
     private val frameCount = sampleRate * 2
@@ -55,15 +58,20 @@ private class ProceduralAmbientPlayer {
         worker = Thread {
             val buffer = ShortArray(frameCount)
             var phase = 0.0
+            var noiseState = 0.0
+            val random = Random(1937)
             track.play()
             while (!Thread.currentThread().isInterrupted) {
                 for (index in buffer.indices) {
                     val time = phase + index.toDouble() / sampleRate
-                    val value =
-                        kotlin.math.sin(time * Math.PI * 2.0 * 110.0) * 0.08 +
-                            kotlin.math.sin(time * Math.PI * 2.0 * 164.81) * 0.035 +
-                            kotlin.math.sin(time * Math.PI * 2.0 * 220.0) * 0.018
-                    buffer[index] = (value * Short.MAX_VALUE).toInt().toShort()
+                    val breath = 0.5 + 0.5 * sin(time * PI * 2.0 / 13.0)
+                    val low = sin(time * PI * 2.0 * 72.0) * (0.018 + breath * 0.024)
+                    val fifth = sin(time * PI * 2.0 * 108.0 + sin(time / 7.0) * 0.7) * 0.014
+                    val shimmerGate = (sin(time * PI * 2.0 / 5.7) + 1.0) * 0.5
+                    val shimmer = sin(time * PI * 2.0 * 880.0) * shimmerGate * 0.004
+                    noiseState = noiseState * 0.985 + (random.nextDouble() * 2.0 - 1.0) * 0.015
+                    val value = low + fifth + shimmer + noiseState * (0.012 + breath * 0.01)
+                    buffer[index] = (value.coerceIn(-0.8, 0.8) * Short.MAX_VALUE).toInt().toShort()
                 }
                 track.write(buffer, 0, buffer.size)
                 phase += buffer.size.toDouble() / sampleRate
