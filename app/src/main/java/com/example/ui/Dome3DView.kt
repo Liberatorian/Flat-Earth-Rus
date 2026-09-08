@@ -137,6 +137,12 @@ fun Dome3DView(
                 project = ::project3D
             )
 
+            // Keep the dome legible from above: its rim and ribs sit over the
+            // surface outline so a top-down pitch does not hide the structure.
+            if (state.layers.showFirmamentGlow) {
+                drawDomeSilhouette(project = ::project3D)
+            }
+
             // 5. Draw Day / Night Spotlight Cone from Sun onto Disc
             if (state.layers.showDayNightCone) {
                 drawDayNightSpotlight(
@@ -181,7 +187,7 @@ fun Dome3DView(
                 .padding(12.dp)
         ) {
             Text(
-                text = "3D КУПОЛ (СНАРУЖИ) • Наклон: ${state.camera3D.pitchDeg.toInt()}° • Азимут: ${state.camera3D.yawDeg.toInt()}°\n(Перетаскивайте для свободного 3D-вращения)",
+                text = "3D КУПОЛ (СНАРУЖИ) • Наклон: ${state.camera3D.pitchDeg.toInt()}° • Азимут: ${state.camera3D.yawDeg.toInt()}°\nКупол: 5 500 км • Солнце: 4 800 км • Диск: 20 000 км",
                 color = Color(0xFF94A3B8),
                 fontSize = 11.sp,
                 lineHeight = 15.sp,
@@ -399,7 +405,7 @@ private fun DrawScope.drawCrystallineDome(
 
         drawPath(
             path = ribPath,
-            color = Color(0x3038BDF8),
+            color = Color(0x7038BDF8),
             style = Stroke(width = 1.0f)
         )
     }
@@ -419,7 +425,7 @@ private fun DrawScope.drawCrystallineDome(
         }
         drawPath(
             path = ringPath,
-            color = Color(0x2238BDF8),
+            color = Color(0x5038BDF8),
             style = Stroke(width = 0.8f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
         )
     }
@@ -436,6 +442,34 @@ private fun DrawScope.drawCrystallineDome(
         radius = 12.0f,
         center = apexPt
     )
+}
+
+private fun DrawScope.drawDomeSilhouette(
+    project: (Double, Double, Double) -> Offset
+) {
+    val domeHeightNorm = FlatEarthConstants.DOME_ZENITH_HEIGHT_KM / FlatEarthConstants.DISC_RADIUS_KM
+    val rimHeightNorm = FlatEarthConstants.DOME_RIM_HEIGHT_KM / FlatEarthConstants.DISC_RADIUS_KM
+    val rim = Path()
+    val steps = 96
+    for (i in 0..steps) {
+        val angle = i * (2.0 * PI / steps)
+        val point = project(sin(angle), cos(angle), rimHeightNorm)
+        if (i == 0) rim.moveTo(point.x, point.y) else rim.lineTo(point.x, point.y)
+    }
+    drawPath(rim, Color(0xB367E8F9), style = Stroke(width = 2.5f))
+
+    for (i in 0 until 12) {
+        val angle = i * (2.0 * PI / 12.0)
+        val edge = project(sin(angle), cos(angle), rimHeightNorm)
+        val apex = project(0.0, 0.0, domeHeightNorm)
+        drawLine(
+            color = Color(0x7045D7F5),
+            start = edge,
+            end = apex,
+            strokeWidth = 1.1f,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(7f, 7f))
+        )
+    }
 }
 
 private fun DrawScope.drawStarDome(
@@ -479,6 +513,18 @@ private fun DrawScope.drawStarDome(
             radius = starRadius,
             center = pt
         )
+    }
+
+    // A reproducible deep field makes the canopy read as a sky, not a short list.
+    for (index in 0 until 180) {
+        val angle = index * 2.3999632297
+        val radial = 0.08 + ((index * 73) % 860) / 1000.0
+        val x = radial * sin(angle + rotationRad)
+        val y = radial * cos(angle + rotationRad)
+        val z = rimHeightNorm + (domeHeightNorm - rimHeightNorm) * (1.0 - radial * radial)
+        val pt = project(x, y, z)
+        val radius = if (index % 17 == 0) 1.8f else 0.9f
+        drawCircle(Color(0xB8E0F2FF), radius, pt)
     }
 
     // Draw Constellation connecting lines

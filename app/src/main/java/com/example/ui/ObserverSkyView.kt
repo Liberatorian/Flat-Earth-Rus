@@ -107,6 +107,16 @@ fun ObserverSkyView(
                 )
             )
 
+            // First-person ground plane. Its horizon moves with camera elevation,
+            // so lowering the view reveals the solid surface instead of empty sky.
+            drawObserverGround(
+                centerX = centerX,
+                centerY = centerY,
+                skyRadius = skyRadius,
+                lookEl = state.observerCamera.elevationPitchDeg,
+                eyeHeightMeters = state.observerCamera.eyeHeightMeters
+            )
+
             // Local Projection helper: converts local (AzimuthDeg, AltitudeDeg)
             // into screen coordinate (x, y) centered around observer's current look heading
             // Looking at lookAzimuth and lookElevation
@@ -240,6 +250,9 @@ fun ObserverSkyView(
             QuickLookChip(label = "Солнце ☀️", active = false) {
                 onSetCamera(state.telemetry.sunApparentAzimuthDeg.toFloat(), state.telemetry.sunApparentAltitudeDeg.toFloat().coerceAtLeast(15f))
             }
+            QuickLookChip(label = "Твердь", active = state.observerCamera.elevationPitchDeg < 8f) {
+                onSetCamera(state.observerCamera.azimuthHeadingDeg, 0f)
+            }
         }
     }
 }
@@ -327,6 +340,54 @@ private fun DrawScope.drawElevationGrid(
     }
 }
 
+private fun DrawScope.drawObserverGround(
+    centerX: Float,
+    centerY: Float,
+    skyRadius: Float,
+    lookEl: Float,
+    eyeHeightMeters: Double
+) {
+    val horizonY = centerY + (sin(Math.toRadians(lookEl.toDouble())) * skyRadius).toFloat()
+    val groundPath = Path().apply {
+        moveTo(0f, horizonY)
+        lineTo(size.width, horizonY)
+        lineTo(size.width, size.height)
+        lineTo(0f, size.height)
+        close()
+    }
+    drawPath(
+        groundPath,
+        brush = Brush.verticalGradient(
+            colors = listOf(Color(0xC91D3B36), Color(0xFF071A1B)),
+            startY = horizonY,
+            endY = size.height
+        )
+    )
+    drawLine(Color(0xCC67E8F9), Offset(0f, horizonY), Offset(size.width, horizonY), 2f)
+
+    // Surface rings provide scale cues while keeping the camera grounded.
+    for (ring in 1..4) {
+        val y = horizonY + (size.height - horizonY) * (ring / 5f)
+        drawOval(
+            color = Color(0x3538BDF8),
+            topLeft = Offset(centerX - skyRadius * (ring / 3f), y - 18f),
+            size = Size(skyRadius * (ring / 1.4f), 36f),
+            style = Stroke(width = 1f)
+        )
+    }
+    val paint = android.graphics.Paint().apply {
+        color = android.graphics.Color.argb(210, 226, 232, 240)
+        textSize = 22f
+        isAntiAlias = true
+    }
+    drawContext.canvas.nativeCanvas.drawText(
+        "ТВЕРДЬ • высота камеры ${String.format("%.1f м", eyeHeightMeters)}",
+        18f,
+        size.height - 18f,
+        paint
+    )
+}
+
 private fun DrawScope.drawCompassLabels(
     centerX: Float,
     centerY: Float,
@@ -387,6 +448,17 @@ private fun DrawScope.drawLocalStars(
                 center = pt
             )
         }
+    }
+
+    for (index in 0 until 180) {
+        val azimuth = (index * 137.50776) % 360.0
+        val altitude = -4.0 + ((index * 47) % 930) / 10.0
+        val pt = skyToScreen(azimuth, altitude) ?: continue
+        drawCircle(
+            color = Color(0xB8E0F2FF),
+            radius = if (index % 17 == 0) 1.8f else 0.9f,
+            center = pt
+        )
     }
 
     // Connect constellations visible in observer's sky

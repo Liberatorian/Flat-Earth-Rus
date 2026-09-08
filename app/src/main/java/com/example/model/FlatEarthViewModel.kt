@@ -45,7 +45,8 @@ data class Camera3D(
 data class ObserverCamera(
     val azimuthHeadingDeg: Float = 180f, // Compass direction looking towards (180=South)
     val elevationPitchDeg: Float = 30f, // Looking up towards zenith (0=horizon, 90=zenith)
-    val fovZoom: Float = 1.0f
+    val fovZoom: Float = 1.0f,
+    val eyeHeightMeters: Double = 1.7
 )
 
 data class FlatEarthAppState(

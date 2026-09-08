@@ -167,7 +167,15 @@ val MAJOR_STARS = listOf(
     StarInfo("Регул (Regulus)", "Alpha Leonis", "Лев", "Leo", 10.14f, 11.97f, 1.35f, 0xFFBAE6FD, "Сердце Льва, царственная звезда"),
     StarInfo("Денебола (Denebola)", "Beta Leonis", "Лев", "Leo", 11.82f, 14.57f, 2.14f, 0xFFFFFFFF, "Хвост Льва"),
     StarInfo("Маркаб (Markab)", "Alpha Pegasi", "Пегас", "Pegasus", 23.08f, 15.21f, 2.49f, 0xFFBAE6FD, "Вершина Большого Квадрата Пегаса"),
-    StarInfo("Шеат (Scheat)", "Beta Pegasi", "Пегас", "Pegasus", 23.06f, 28.08f, 2.42f, 0xFFFED7AA, "Красный гигант в квадрате Пегаса")
+    StarInfo("Шеат (Scheat)", "Beta Pegasi", "Пегас", "Pegasus", 23.06f, 28.08f, 2.42f, 0xFFFED7AA, "Красный гигант в квадрате Пегаса"),
+
+    // Дополнительные ориентиры: Близнецы, Малый Пёс, Дева и Козерог
+    StarInfo("Кастор (Castor)", "Alpha Geminorum", "Близнецы", "Gemini", 7.58f, 31.89f, 1.58f, 0xFFBAE6FD, "Двойная звезда северного зодиака"),
+    StarInfo("Поллукс (Pollux)", "Beta Geminorum", "Близнецы", "Gemini", 7.76f, 28.03f, 1.14f, 0xFFFFD59A, "Золотистая звезда Близнецов"),
+    StarInfo("Процион (Procyon)", "Alpha Canis Minoris", "Малый Пёс", "Canis Minor", 7.66f, 5.23f, 0.34f, 0xFFFFF4C2, "Яркая звезда Малого Пса"),
+    StarInfo("Поррима (Porrima)", "Gamma Virginis", "Дева", "Virgo", 12.69f, -1.45f, 2.74f, 0xFFFFFFFF, "Двойная звезда Девы"),
+    StarInfo("Зубенэльгенуби (Zubenelgenubi)", "Alpha Librae", "Весы", "Libra", 14.85f, -16.04f, 2.75f, 0xFFFFE4B5, "Южная клешня древнего Скорпиона"),
+    StarInfo("Денеб Альгеди (Deneb Algedi)", "Delta Capricorni", "Козерог", "Capricornus", 21.78f, -16.13f, 2.85f, 0xFFFFFFFF, "Хвост Козерога")
 )
 
 data class ConstellationLine(
@@ -233,6 +241,16 @@ val CONSTELLATION_LINES = listOf(
 
     // Пегас
     ConstellationLine("Маркаб (Markab)", "Шеат (Scheat)"),
+
+    // Близнецы
+    ConstellationLine("Кастор (Castor)", "Поллукс (Pollux)"),
+    ConstellationLine("Поллукс (Pollux)", "Процион (Procyon)"),
+
+    // Дева и южная часть зодиака
+    ConstellationLine("Спика (Spica)", "Поррима (Porrima)"),
+    ConstellationLine("Поррима (Porrima)", "Зубенэльгенуби (Zubenelgenubi)"),
+    ConstellationLine("Зубенэльгенуби (Zubenelgenubi)", "Антарес (Antares)"),
+    ConstellationLine("Антарес (Antares)", "Денеб Альгеди (Deneb Algedi)"),
 
     // Южный Крест
     ConstellationLine("Акрукс (Acrux)", "Гакрукс (Gacrux)"),
