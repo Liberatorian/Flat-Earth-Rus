@@ -71,7 +71,8 @@ fun ObserverSkyView(
             val height = size.height
             val centerX = width / 2f
             val centerY = height * 0.55f
-            val skyRadius = minOf(width, height) * 0.44f * state.observerCamera.fovZoom
+            val fieldOfViewHalfRad = Math.toRadians((42.0 / state.observerCamera.fovZoom).coerceIn(24.0, 58.0))
+            val skyRadius = (minOf(width, height) * 0.5f / kotlin.math.tan(fieldOfViewHalfRad)).toFloat()
 
             val isDay = state.telemetry.isObserverDaytime
             val sunAlt = state.telemetry.sunApparentAltitudeDeg.toFloat()
@@ -124,8 +125,8 @@ fun ObserverSkyView(
             val lookAz = state.observerCamera.azimuthHeadingDeg
             val lookEl = state.observerCamera.elevationPitchDeg
 
-            // Orthographic projection onto the observer's view plane. The camera
-            // elevation affects both the visible hemisphere and star positions.
+            // Perspective projection from the observer's eye. This keeps the
+            // horizon open and gives the sky a real camera field of view.
             fun skyToScreen(targetAz: Double, targetAlt: Double): Offset? {
                 val targetAltRad = Math.toRadians(targetAlt)
                 val lookElRad = Math.toRadians(lookEl.toDouble())
@@ -137,10 +138,7 @@ fun ObserverSkyView(
 
                 val right = cosAlt * sin(deltaAzRad)
                 val up = sinAlt * cos(lookElRad) - cosAlt * cos(deltaAzRad) * sin(lookElRad)
-                return Offset(
-                    centerX + (right * skyRadius).toFloat(),
-                    centerY - (up * skyRadius).toFloat()
-                )
+                return Offset(centerX + (right / forward * skyRadius).toFloat(), centerY - (up / forward * skyRadius).toFloat())
             }
 
             // 2. Draw Horizon & Elevation Grid Rings
@@ -294,36 +292,15 @@ private fun DrawScope.drawElevationGrid(
 ) {
     val lookElRad = Math.toRadians(lookEl.toDouble())
 
-    // On a tilted view the horizon is an ellipse, not a fixed centered circle.
-    drawOval(
-        color = Color(0x6038BDF8),
-        topLeft = Offset(
-            centerX - skyRadius,
-            centerY + (sin(lookElRad) * skyRadius).toFloat() - (cos(lookElRad) * skyRadius).toFloat()
-        ),
-        size = Size(
-            width = skyRadius * 2,
-            height = (cos(lookElRad) * skyRadius * 2).toFloat()
-        ),
-        style = Stroke(width = 2.0f)
-    )
+    val horizonY = centerY + (sin(lookElRad) * skyRadius).toFloat()
+    drawLine(Color(0x8038BDF8), Offset(0f, horizonY), Offset(size.width, horizonY), 2f)
 
-    // Elevation rings: 30°, 60°
-    val rings = listOf(
-        Pair(30.0, "30°"),
-        Pair(60.0, "60°")
-    )
-    for ((alt, label) in rings) {
-        val altitudeRad = Math.toRadians(alt)
-        val horizontalRadius = (cos(altitudeRad) * skyRadius).toFloat()
-        val verticalRadius = (cos(altitudeRad) * sin(lookElRad) * skyRadius).toFloat()
-        val ringCenterY = centerY + (sin(altitudeRad) * cos(lookElRad) * skyRadius).toFloat()
-        drawOval(
-            color = Color(0x2538BDF8),
-            topLeft = Offset(centerX - horizontalRadius, ringCenterY - verticalRadius),
-            size = Size(horizontalRadius * 2, verticalRadius * 2),
-            style = Stroke(width = 1.0f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
-        )
+    // Open azimuth guides replace the old circular mask, which made the view
+    // read like a tube. They converge toward the zenith and remain screen-wide.
+    for (a in 0 until 8) {
+        val angle = Math.toRadians(a * 45.0 - lookAz)
+        val endX = centerX + sin(angle).toFloat() * size.width * 0.5f
+        drawLine(Color(0x2538BDF8), Offset(centerX, horizonY), Offset(endX, 0f), 1f)
     }
 
     // Zenith marker (90° Altitude)

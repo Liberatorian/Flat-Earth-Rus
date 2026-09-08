@@ -93,6 +93,14 @@ fun Gleason2DView(
             val centerY = height * 0.52f
             val discRadius = minOf(width, height) * 0.42f
 
+            fun geoToPixel(latitude: Double, longitude: Double): Offset {
+                val (xKm, yKm) = com.example.model.CelestialEngine.geoToDiscKm(latitude, longitude, state.projection)
+                return Offset(
+                    centerX + (xKm / FlatEarthConstants.DISC_RADIUS_KM * discRadius).toFloat(),
+                    centerY + (yKm / FlatEarthConstants.DISC_RADIUS_KM * discRadius).toFloat()
+                )
+            }
+
             // 1. Draw Space & Polar Border Background
             drawRect(
                 brush = Brush.radialGradient(
@@ -181,10 +189,7 @@ fun Gleason2DView(
 
             // 7. Draw Day / Night Spotlight Cone & Penumbra
             if (state.layers.showDayNightCone) {
-                val sunPx = Offset(
-                    centerX + (state.telemetry.sunDiscX * discRadius).toFloat(),
-                    centerY + (state.telemetry.sunDiscY * discRadius).toFloat()
-                )
+                val sunPx = geoToPixel(state.telemetry.sunLatitude, state.telemetry.sunLongitude)
                 val spotRadiusPx = (FlatEarthConstants.SUN_SPOTLIGHT_RADIUS_KM / FlatEarthConstants.DISC_RADIUS_KM * discRadius).toFloat()
 
                 // Daylight pool
@@ -215,22 +220,17 @@ fun Gleason2DView(
             // 8. Draw City Markers
             if (state.layers.showCityMarkers) {
                 for (city in PRESET_CITIES) {
-                    val (xKm, yKm) = com.example.model.CelestialEngine.geoToDiscKm(city.latitude, city.longitude)
-                    val cx = centerX + (xKm / FlatEarthConstants.DISC_RADIUS_KM * discRadius).toFloat()
-                    val cy = centerY + (yKm / FlatEarthConstants.DISC_RADIUS_KM * discRadius).toFloat()
+                    val cityPoint = geoToPixel(city.latitude, city.longitude)
                     drawCircle(
                         color = Color(0xFF38BDF8).copy(alpha = 0.75f),
                         radius = 3.5f,
-                        center = Offset(cx, cy)
+                        center = cityPoint
                     )
                 }
             }
 
             // 9. Draw Observer Marker
-            val obsPx = Offset(
-                centerX + (state.telemetry.observerDiscX * discRadius).toFloat(),
-                centerY + (state.telemetry.observerDiscY * discRadius).toFloat()
-            )
+            val obsPx = geoToPixel(state.observerLocation.latitude, state.observerLocation.longitude)
             val pulseR = 12f + 4f * sin((System.currentTimeMillis() % 2000) / 2000.0 * 2 * PI).toFloat()
             drawCircle(color = Color(0x6006B6D4), radius = pulseR, center = obsPx)
             drawCircle(color = Color(0xFF06B6D4), radius = 6f, center = obsPx)
@@ -251,10 +251,7 @@ fun Gleason2DView(
             )
 
             // 10. Draw Sun
-            val sunPos = Offset(
-                centerX + (state.telemetry.sunDiscX * discRadius).toFloat(),
-                centerY + (state.telemetry.sunDiscY * discRadius).toFloat()
-            )
+            val sunPos = geoToPixel(state.telemetry.sunLatitude, state.telemetry.sunLongitude)
             // Sun orbit ring (seasonal circular path)
             val sunOrbitRadiusPx = (state.telemetry.sunDiscRadiusKm / FlatEarthConstants.DISC_RADIUS_KM * discRadius).toFloat()
             drawCircle(
@@ -277,10 +274,7 @@ fun Gleason2DView(
             drawCircle(color = SunGold, radius = 9f, center = sunPos)
 
             // 11. Draw Moon
-            val moonPos = Offset(
-                centerX + (state.telemetry.moonDiscX * discRadius).toFloat(),
-                centerY + (state.telemetry.moonDiscY * discRadius).toFloat()
-            )
+            val moonPos = geoToPixel(state.telemetry.moonLatitude, state.telemetry.moonLongitude)
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(Color(0x90F1F5F9), Color(0x3094A3B8), Color(0x000F172A)),
