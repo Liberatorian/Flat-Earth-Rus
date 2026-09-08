@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Functions
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Public
@@ -45,6 +46,8 @@ fun CosmosTopBar(
     onOpenLocationPicker: () -> Unit,
     onOpenLayers: () -> Unit,
     onOpenTheory: () -> Unit,
+    onOpenReference: () -> Unit,
+    onToggleAmbientAudio: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -131,6 +134,30 @@ fun CosmosTopBar(
                             contentDescription = "Формулы и физика",
                             tint = Color(0xFFFDE047),
                             modifier = Modifier.size(19.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onOpenReference,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Справочник модели",
+                            tint = Color(0xFF67E8F9),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onToggleAmbientAudio,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Text(
+                            text = if (state.isAmbientAudioEnabled) "♫" else "♪",
+                            color = if (state.isAmbientAudioEnabled) Color(0xFF34D399) else Color(0xFF64748B),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }

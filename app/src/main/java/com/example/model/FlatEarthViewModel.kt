@@ -65,6 +65,8 @@ data class FlatEarthAppState(
         PRESET_CITIES[0]
     ),
     val showTheoryDialog: Boolean = false,
+    val showReferenceDialog: Boolean = false,
+    val isAmbientAudioEnabled: Boolean = false,
     val showLocationPicker: Boolean = false,
     val showSettingsSheet: Boolean = false
 )
@@ -219,6 +221,14 @@ class FlatEarthViewModel : ViewModel() {
 
     fun setShowTheoryDialog(show: Boolean) {
         _uiState.update { it.copy(showTheoryDialog = show) }
+    }
+
+    fun setShowReferenceDialog(show: Boolean) {
+        _uiState.update { it.copy(showReferenceDialog = show) }
+    }
+
+    fun setAmbientAudioEnabled(enabled: Boolean) {
+        _uiState.update { it.copy(isAmbientAudioEnabled = enabled) }
     }
 
     fun setShowLocationPicker(show: Boolean) {

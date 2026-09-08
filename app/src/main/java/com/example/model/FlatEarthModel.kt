@@ -42,7 +42,7 @@ data class DomePhysicalSettings(
     val sunAltitudeKm: Double = FlatEarthConstants.SUN_ALTITUDE_KM,
     val moonAltitudeKm: Double = FlatEarthConstants.MOON_ALTITUDE_KM,
     val domeZenithHeightKm: Double = FlatEarthConstants.DOME_ZENITH_HEIGHT_KM,
-    val iceWallHeightVisualKm: Double = 1200.0, // Visual-only wall thickness for exterior readability
+    val iceWallHeightVisualKm: Double = FlatEarthConstants.ICE_WALL_HEIGHT_METERS / 1000.0, // Physical wall height, no visual exaggeration
     val sunSpotlightRadiusKm: Double = FlatEarthConstants.SUN_SPOTLIGHT_RADIUS_KM
 )
 

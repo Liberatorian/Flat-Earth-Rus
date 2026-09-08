@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,6 +40,8 @@ fun FlatEarthCosmosApp(
                 onOpenLocationPicker = { viewModel.setShowLocationPicker(true) },
                 onOpenLayers = { viewModel.setShowSettingsSheet(true) },
                 onOpenTheory = { viewModel.setShowTheoryDialog(true) }
+                    ,onOpenReference = { viewModel.setShowReferenceDialog(true) }
+                    ,onToggleAmbientAudio = { viewModel.setAmbientAudioEnabled(!state.isAmbientAudioEnabled) }
             )
         },
         bottomBar = {
@@ -59,6 +62,7 @@ fun FlatEarthCosmosApp(
         },
         containerColor = Color(0xFF030712)
     ) { innerPadding ->
+        AmbientAudioEffect(enabled = state.isAmbientAudioEnabled)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -109,6 +113,12 @@ fun FlatEarthCosmosApp(
             if (state.showTheoryDialog) {
                 TheoryDialog(
                     onDismiss = { viewModel.setShowTheoryDialog(false) }
+                )
+            }
+
+            if (state.showReferenceDialog) {
+                ModelReferenceDialog(
+                    onDismiss = { viewModel.setShowReferenceDialog(false) }
                 )
             }
 
