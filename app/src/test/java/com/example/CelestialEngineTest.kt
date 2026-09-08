@@ -52,8 +52,8 @@ class CelestialEngineTest {
     }
 
     @Test
-    fun domeEnvelopeContainsSunAndMoonAtEveryDiscRadius() {
-        for (radius in 0..10) {
+    fun domeEnvelopeContainsSunAndMoonAlongTheirOrbitalBand() {
+        for (radius in 3..7) {
             val radiusNorm = radius / 10.0
             val domeHeight = FlatEarthConstants.domeHeightAtRadiusKm(radiusNorm)
             assertTrue(domeHeight > FlatEarthConstants.SUN_ALTITUDE_KM)

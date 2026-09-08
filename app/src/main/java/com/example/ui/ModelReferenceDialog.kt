@@ -45,7 +45,7 @@ fun ModelReferenceDialog(onDismiss: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                item { ReferenceBlock("МАСШТАБ", "Диск R = 20 000 км; экватор = 10 000 км; физическая ледяная стена = 75 м; купол = 5 300–7 200 км; Солнце = 4 800 км; Луна = 4 750 км.") }
+                item { ReferenceBlock("МАСШТАБ", "Диск R = 20 000 км; экватор = 10 000 км; физическая ледяная стена = 75 м; купол = 0–10 500 км; Солнце = 4 800 км; Луна = 4 750 км.") }
                 item { ReferenceBlock("КООРДИНАТЫ", "r = R · (90° − latitude) / 180°\nx = r · sin(longitude)\ny = −r · cos(longitude)\nПроекции AE, stereographic и orthographic можно сравнивать отдельно.") }
                 item { ReferenceBlock("СОЛНЦЕ И ЛУНА", "Солнечная широта: δ(t) = 23.44° · sin(2π(t − 80) / 365.25).\nЛунная фаза: k = (1 − cos(Δφ)) / 2; синодический цикл = 29.530589 суток.") }
                 item { ReferenceBlock("НАБЛЮДАТЕЛЬ", "Для каждого светила доступны геометрическая высота, наблюдаемая высота после атмосферного пути, азимут, расстояние и угловой диаметр.") }

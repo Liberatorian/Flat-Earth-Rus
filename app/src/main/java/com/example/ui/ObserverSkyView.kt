@@ -50,6 +50,7 @@ import kotlin.math.sin
 fun ObserverSkyView(
     state: FlatEarthAppState,
     onCameraDelta: (azimuthDelta: Float, elevationDelta: Float, zoomDelta: Float) -> Unit,
+    onToggleCompass: () -> Unit,
     onSetCamera: (azimuth: Float, elevation: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -196,6 +197,11 @@ fun ObserverSkyView(
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
                 Text(
+                    text = if (state.isCompassModeEnabled) "AR-КОМПАС • смартфон управляет направлением" else "РУЧНАЯ КАМЕРА • проведите по небу",
+                    color = if (state.isCompassModeEnabled) Color(0xFF34D399) else Color(0xFF94A3B8),
+                    fontSize = 10.sp
+                )
+                Text(
                     text = "Высота Солнца: ${String.format("%.1f°", state.telemetry.sunApparentAltitudeDeg)} • Азимут: ${String.format("%.1f°", state.telemetry.sunApparentAzimuthDeg)}",
                     color = Color(0xFFFDE047),
                     fontSize = 11.sp
@@ -252,6 +258,9 @@ fun ObserverSkyView(
             }
             QuickLookChip(label = "Твердь", active = state.observerCamera.elevationPitchDeg < 8f) {
                 onSetCamera(state.observerCamera.azimuthHeadingDeg, 0f)
+            }
+            QuickLookChip(label = if (state.isCompassModeEnabled) "AR выкл." else "AR компас", active = state.isCompassModeEnabled) {
+                onToggleCompass()
             }
         }
     }

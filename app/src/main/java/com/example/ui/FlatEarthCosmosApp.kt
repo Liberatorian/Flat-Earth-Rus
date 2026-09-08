@@ -12,6 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -63,6 +64,10 @@ fun FlatEarthCosmosApp(
         containerColor = Color(0xFF030712)
     ) { innerPadding ->
         AmbientAudioEffect(enabled = state.isAmbientAudioEnabled)
+        CompassSensorEffect(
+            enabled = state.isCompassModeEnabled && state.viewMode == ViewMode.OBSERVER_SKY,
+            onOrientationChanged = viewModel::setSensorOrientation
+        )
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -80,6 +85,7 @@ fun FlatEarthCosmosApp(
                     ObserverSkyView(
                         state = state,
                         onCameraDelta = { az, el, zoom -> viewModel.updateObserverCamera(az, el, zoom) },
+                        onToggleCompass = { viewModel.setCompassModeEnabled(!state.isCompassModeEnabled) },
                         onSetCamera = { az, el ->
                             val deltaAz = az - state.observerCamera.azimuthHeadingDeg
                             val deltaEl = el - state.observerCamera.elevationPitchDeg

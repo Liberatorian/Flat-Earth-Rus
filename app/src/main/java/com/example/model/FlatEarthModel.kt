@@ -20,8 +20,8 @@ object FlatEarthConstants {
     const val ANTARCTIC_CIRCLE_KM = 17400.0
 
     // Firmament / Celestial heights
-    const val DOME_ZENITH_HEIGHT_KM = 7200.0 // Experimental apex height, above both luminaries
-    const val DOME_RIM_HEIGHT_KM = 5300.0 // Rim clearance above the 4,800 km Sun path
+    const val DOME_ZENITH_HEIGHT_KM = 10500.0 // Apex height that contains the full luminary orbital band
+    const val DOME_RIM_HEIGHT_KM = 0.0 // Dome is anchored to the physical surface at the rim
     const val ICE_WALL_HEIGHT_METERS = 75.0 // Average ice cliff elevation above ocean (~250 ft)
     const val SUN_ALTITUDE_KM = 4800.0 // Local Sun altitude above flat plane (~3000 miles)
     const val MOON_ALTITUDE_KM = 4750.0 // Local Moon altitude (~3000 miles)

@@ -67,6 +67,7 @@ data class FlatEarthAppState(
     val showTheoryDialog: Boolean = false,
     val showReferenceDialog: Boolean = false,
     val isAmbientAudioEnabled: Boolean = false,
+    val isCompassModeEnabled: Boolean = false,
     val showLocationPicker: Boolean = false,
     val showSettingsSheet: Boolean = false
 )
@@ -229,6 +230,21 @@ class FlatEarthViewModel : ViewModel() {
 
     fun setAmbientAudioEnabled(enabled: Boolean) {
         _uiState.update { it.copy(isAmbientAudioEnabled = enabled) }
+    }
+
+    fun setCompassModeEnabled(enabled: Boolean) {
+        _uiState.update { it.copy(isCompassModeEnabled = enabled) }
+    }
+
+    fun setSensorOrientation(azimuthDeg: Float, elevationDeg: Float) {
+        _uiState.update {
+            it.copy(
+                observerCamera = it.observerCamera.copy(
+                    azimuthHeadingDeg = ((azimuthDeg % 360f) + 360f) % 360f,
+                    elevationPitchDeg = elevationDeg.coerceIn(0f, 90f)
+                )
+            )
+        }
     }
 
     fun setShowLocationPicker(show: Boolean) {

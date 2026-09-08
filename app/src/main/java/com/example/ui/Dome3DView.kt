@@ -187,7 +187,7 @@ fun Dome3DView(
                 .padding(12.dp)
         ) {
             Text(
-                text = "3D КУПОЛ (СНАРУЖИ) • Наклон: ${state.camera3D.pitchDeg.toInt()}° • Азимут: ${state.camera3D.yawDeg.toInt()}°\nКупол: 5 300–7 200 км • Солнце: 4 800 км • Диск: 20 000 км",
+                text = "3D КУПОЛ (СНАРУЖИ) • Наклон: ${state.camera3D.pitchDeg.toInt()}° • Азимут: ${state.camera3D.yawDeg.toInt()}°\nКупол: 0–10 500 км • Солнце: 4 800 км • Диск: 20 000 км",
                 color = Color(0xFF94A3B8),
                 fontSize = 11.sp,
                 lineHeight = 15.sp,
