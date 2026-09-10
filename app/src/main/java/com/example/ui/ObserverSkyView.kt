@@ -69,7 +69,8 @@ fun ObserverSkyView(
                 detectTransformGestures { _, pan, zoom, rotation ->
                     // Pan rotates the view; pinch changes the field of view.
                     val azDelta = -pan.x * 0.25f + rotation * 0.15f
-                    val elDelta = -pan.y * 0.2f
+                    // Vertical finger movement maps directly to camera elevation.
+                    val elDelta = pan.y * 0.2f
                     onCameraDelta(azDelta, elDelta, zoom - 1f)
                 }
             }
