@@ -11,7 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import kotlin.math.PI
+import kotlin.math.asin
+import kotlin.math.atan2
 
 @Composable
 fun CompassSensorEffect(
@@ -35,7 +36,6 @@ private class CompassSensorController(
     private val rotationSensor = manager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     private val rotationMatrix = FloatArray(9)
     private val remappedMatrix = FloatArray(9)
-    private val orientation = FloatArray(3)
 
     fun start() {
         rotationSensor?.let {
@@ -59,13 +59,17 @@ private class CompassSensorController(
             else -> SensorManager.AXIS_X to SensorManager.AXIS_Y
         }
         SensorManager.remapCoordinateSystem(rotationMatrix, axisX, axisY, remappedMatrix)
-        SensorManager.getOrientation(remappedMatrix, orientation)
 
-        val azimuth = ((orientation[0] * 180f / PI.toFloat()) + 360f) % 360f
-        // Android's positive pitch points opposite to the camera tilt expected
-        // by the sky view: lowering the phone must lower the horizon.
-        val pitch = (-orientation[1] * 180f / PI.toFloat()).coerceIn(-90f, 90f)
-        onOrientationChanged(azimuth, pitch.coerceAtLeast(0f))
+        // The rear camera looks along the device -Z axis. Transform that axis
+        // into the world frame instead of using the phone body's pitch, which
+        // makes a vertically held phone incorrectly point at the zenith.
+        val cameraEast = -remappedMatrix[2].toDouble()
+        val cameraNorth = -remappedMatrix[5].toDouble()
+        val cameraUp = (-remappedMatrix[8].toDouble()).coerceIn(-1.0, 1.0)
+        val azimuth = Math.toDegrees(atan2(cameraEast, cameraNorth))
+            .let { ((it + 360.0) % 360.0).toFloat() }
+        val elevation = Math.toDegrees(asin(cameraUp)).toFloat().coerceIn(0f, 90f)
+        onOrientationChanged(azimuth, elevation)
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
