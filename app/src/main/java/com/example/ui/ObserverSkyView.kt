@@ -170,13 +170,15 @@ fun ObserverSkyView(
             // 4. Draw The Sun with Perspective Glare and Ray
             drawLocalSun(
                 state = state,
-                skyToScreen = ::skyToScreen
+                skyToScreen = ::skyToScreen,
+                skyRadius = skyRadius
             )
 
             // 5. Draw The Moon with Apparent Phase and Orientation
             drawLocalMoon(
                 state = state,
-                skyToScreen = ::skyToScreen
+                skyToScreen = ::skyToScreen,
+                skyRadius = skyRadius
             )
 
             // 6. Draw Compass Direction Labels along the Horizon
@@ -460,8 +462,15 @@ private fun DrawScope.drawLocalStars(
     }
 
     for (index in 0 until 180) {
-        val azimuth = (index * 137.50776) % 360.0
-        val altitude = -4.0 + ((index * 47) % 930) / 10.0
+        val syntheticRa = ((index * 7.913) % 24.0).toFloat()
+        val syntheticDec = (-75.0 + ((index * 47) % 1550) / 10.0).toFloat()
+        val (altitude, azimuth) = CelestialEngine.equatorialToHorizontal(
+            raHours = syntheticRa,
+            decDeg = syntheticDec,
+            obsLatDeg = state.observerLocation.latitude,
+            obsLonDeg = state.observerLocation.longitude,
+            timestampMillis = state.currentTimestampMillis
+        )
         val pt = skyToScreen(azimuth, altitude) ?: continue
         drawCircle(
             color = Color(0xB8E0F2FF),
@@ -487,7 +496,8 @@ private fun DrawScope.drawLocalStars(
 
 private fun DrawScope.drawLocalSun(
     state: FlatEarthAppState,
-    skyToScreen: (Double, Double) -> Offset?
+    skyToScreen: (Double, Double) -> Offset?,
+    skyRadius: Float
 ) {
     val sunAlt = state.telemetry.sunApparentAltitudeDeg
     val sunAz = state.telemetry.sunApparentAzimuthDeg
@@ -510,7 +520,7 @@ private fun DrawScope.drawLocalSun(
     )
 
     // Sun disk
-    val radiusPx = (state.telemetry.sunApparentDiameterArcmin / 32.0 * 14.0).toFloat().coerceIn(8f, 22f)
+    val radiusPx = angularRadiusPx(state.telemetry.sunApparentDiameterArcmin, skyRadius)
     drawCircle(
         color = SunGold,
         radius = radiusPx,
@@ -534,7 +544,8 @@ private fun DrawScope.drawLocalSun(
 
 private fun DrawScope.drawLocalMoon(
     state: FlatEarthAppState,
-    skyToScreen: (Double, Double) -> Offset?
+    skyToScreen: (Double, Double) -> Offset?,
+    skyRadius: Float
 ) {
     val moonAlt = state.telemetry.moonApparentAltitudeDeg
     val moonAz = state.telemetry.moonApparentAzimuthDeg
@@ -557,7 +568,7 @@ private fun DrawScope.drawLocalMoon(
     )
 
     // Moon disk with the same phase model as the external view.
-    val radiusPx = 10f
+    val radiusPx = angularRadiusPx(state.telemetry.moonApparentDiameterArcmin, skyRadius)
     drawCircle(
         color = Color(0xFF1E293B),
         radius = radiusPx,
@@ -602,4 +613,11 @@ private fun DrawScope.drawLocalMoon(
         pt.y + radiusPx + 24f,
         paint
     )
+}
+
+private fun angularRadiusPx(diameterArcmin: Double, skyRadius: Float): Float {
+    val diameterRad = Math.toRadians(diameterArcmin / 60.0)
+    return (kotlin.math.tan(diameterRad / 2.0) * skyRadius.toDouble())
+        .coerceIn(3.0, 26.0)
+        .toFloat()
 }

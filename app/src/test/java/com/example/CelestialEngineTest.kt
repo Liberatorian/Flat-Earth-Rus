@@ -4,6 +4,8 @@ import com.example.model.CelestialEngine
 import com.example.model.MapProjection
 import com.example.model.OpticsEngine
 import com.example.model.FlatEarthConstants
+import com.example.model.GleasonMapData
+import com.example.model.PRESET_CITIES
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -69,5 +71,39 @@ class CelestialEngineTest {
             assertTrue(domeHeight > FlatEarthConstants.SUN_ALTITUDE_KM)
             assertTrue(domeHeight > FlatEarthConstants.MOON_ALTITUDE_KM)
         }
+    }
+
+    @Test
+    fun moonFollowsSunInSameDirectionButSlightlySlower() {
+        val first = CelestialEngine.calculateState(1_700_000_000_000L, PRESET_CITIES[0])
+        val second = CelestialEngine.calculateState(1_700_000_000_000L + 3_600_000L, PRESET_CITIES[0])
+        val sunDelta = signedLongitudeDelta(first.sunLongitude, second.sunLongitude)
+        val moonDelta = signedLongitudeDelta(first.moonLongitude, second.moonLongitude)
+
+        assertTrue(sunDelta < 0.0)
+        assertTrue(moonDelta < 0.0)
+        assertTrue(kotlin.math.abs(moonDelta) < kotlin.math.abs(sunDelta))
+    }
+
+    @Test
+    fun observerTelemetryContainsDistanceBasedAngularDiameters() {
+        val state = CelestialEngine.calculateState(1_700_000_000_000L, PRESET_CITIES[0])
+
+        assertTrue(state.sunApparentDiameterArcmin > 0.0)
+        assertTrue(state.moonApparentDiameterArcmin > 0.0)
+        assertTrue(state.observerDistanceToSunKm > 0.0)
+        assertTrue(state.observerDistanceToMoonKm > 0.0)
+    }
+
+    @Test
+    fun polarIceContinentIsPresentAtTheDiscCenter() {
+        assertTrue(GleasonMapData.ALL_CONTINENTS.contains(GleasonMapData.POLAR_ICE_CONTINENT))
+        val center = GleasonMapData.POLAR_ICE_CONTINENT.first()
+        val projected = CelestialEngine.geoToDiscKm(center.lat, center.lon)
+        assertTrue(kotlin.math.hypot(projected.first, projected.second) < 500.0)
+    }
+
+    private fun signedLongitudeDelta(first: Double, second: Double): Double {
+        return ((second - first + 540.0) % 360.0) - 180.0
     }
 }

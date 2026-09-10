@@ -173,8 +173,9 @@ object CelestialEngine {
             else -> "Стареющий месяц (${(phaseFraction * 100).toInt()}%)"
         }
 
-        // Moon longitude lags behind Sun by phaseAngleDeg
-        var moonLonDeg = (sunLonDeg - phaseAngleDeg) % 360.0
+        // The Moon follows the Sun around the disc, advancing eastward by its
+        // phase angle. This keeps its apparent daily motion slightly slower.
+        var moonLonDeg = (sunLonDeg + phaseAngleDeg) % 360.0
         if (moonLonDeg < -180.0) moonLonDeg += 360.0
         if (moonLonDeg > 180.0) moonLonDeg -= 360.0
 

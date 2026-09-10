@@ -160,6 +160,20 @@ object GleasonMapData {
         GeoPoint(-12.0, 49.0)
     )
 
+    // Model feature shown beneath the polar ice on the historical-style map.
+    // It is not presented as verified geography.
+    val POLAR_ICE_CONTINENT = listOf(
+        GeoPoint(88.0, 0.0),
+        GeoPoint(87.0, 45.0),
+        GeoPoint(86.0, 90.0),
+        GeoPoint(87.0, 135.0),
+        GeoPoint(88.0, 180.0),
+        GeoPoint(87.0, -135.0),
+        GeoPoint(86.0, -90.0),
+        GeoPoint(87.0, -45.0),
+        GeoPoint(88.0, 0.0)
+    )
+
     val ALL_CONTINENTS = listOf(
         EURASIA,
         BRITAIN,
@@ -169,7 +183,8 @@ object GleasonMapData {
         SOUTH_AMERICA,
         AUSTRALIA,
         JAPAN,
-        MADAGASCAR
+        MADAGASCAR,
+        POLAR_ICE_CONTINENT
     )
 
     /**

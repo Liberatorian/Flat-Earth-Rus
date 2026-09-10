@@ -173,8 +173,9 @@ fun Gleason2DView(
             // 4. Draw Continents on the Flat Disc
             for (continent in GleasonMapData.ALL_CONTINENTS) {
                 val path = GleasonMapData.polygonToPath(continent, centerX, centerY, discRadius, state.projection)
-                drawPath(path = path, color = Color(0xFF1E3A2F))
-                drawPath(path = path, color = Color(0xFF34D399), style = Stroke(width = 1.4f))
+                val polar = continent === GleasonMapData.POLAR_ICE_CONTINENT
+                drawPath(path = path, color = if (polar) Color(0xFFBFE8F5) else Color(0xFF1E3A2F))
+                drawPath(path = path, color = if (polar) Color(0xFFE0F2FE) else Color(0xFF34D399), style = Stroke(width = 1.4f))
             }
 
             val continentLabelPaint = android.graphics.Paint().apply {
@@ -189,7 +190,8 @@ fun Gleason2DView(
                 "АФРИКА" to Pair(5.0, 20.0),
                 "СЕВЕРНАЯ АМЕРИКА" to Pair(48.0, -100.0),
                 "ЮЖНАЯ АМЕРИКА" to Pair(-18.0, -60.0),
-                "АВСТРАЛИЯ" to Pair(-25.0, 135.0)
+                "АВСТРАЛИЯ" to Pair(-25.0, 135.0),
+                "ПОЛЯРНАЯ ЗЕМЛЯ\nПОД ЛЬДАМИ" to Pair(87.0, 0.0)
             ).forEach { (label, coordinates) ->
                 val labelPoint = geoToPixel(coordinates.first, coordinates.second)
                 drawContext.canvas.nativeCanvas.drawText(label, labelPoint.x, labelPoint.y, continentLabelPaint)
