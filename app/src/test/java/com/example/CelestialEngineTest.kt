@@ -10,6 +10,7 @@ import com.example.model.FlatEarthAppState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Calendar
 
 class CelestialEngineTest {
     @Test
@@ -124,6 +125,23 @@ class CelestialEngineTest {
         assertTrue(state.isRealTime)
         assertEquals(1.0, state.timeSpeedMultiplier, 0.0)
         assertTrue(kotlin.math.abs(state.currentTimestampMillis - System.currentTimeMillis()) < 2_000L)
+    }
+
+    @Test
+    fun telemetryDisplaysDeviceLocalTimeSeparatelyFromUtc() {
+        val timestamp = 1_700_000_000_000L
+        val telemetry = CelestialEngine.calculateState(timestamp, PRESET_CITIES[0])
+        val local = Calendar.getInstance().apply { timeInMillis = timestamp }
+        val expected = String.format(
+            "%02d:%02d:%02d %s",
+            local.get(Calendar.HOUR_OF_DAY),
+            local.get(Calendar.MINUTE),
+            local.get(Calendar.SECOND),
+            local.timeZone.id
+        )
+
+        assertEquals(expected, telemetry.localHourString)
+        assertTrue(telemetry.utcHourString.endsWith(" UTC"))
     }
 
     private fun signedLongitudeDelta(first: Double, second: Double): Double {

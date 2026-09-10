@@ -13,6 +13,7 @@ data class CelestialTelemetry(
     // Time
     val timestampMillis: Long,
     val utcHourString: String,
+    val localHourString: String,
     val dayOfYear: Int,
     val seasonNameRu: String,
 
@@ -119,6 +120,14 @@ object CelestialEngine {
 
         val fracHourUtc = hourUtc + (minUtc / 60.0) + (secUtc / 3600.0) + (msUtc / 3600000.0)
         val utcHourString = String.format("%02d:%02d:%02d UTC", hourUtc, minUtc, secUtc)
+        val localCalendar = Calendar.getInstance().apply { timeInMillis = timestampMillis }
+        val localHourString = String.format(
+            "%02d:%02d:%02d %s",
+            localCalendar.get(Calendar.HOUR_OF_DAY),
+            localCalendar.get(Calendar.MINUTE),
+            localCalendar.get(Calendar.SECOND),
+            localCalendar.timeZone.id
+        )
 
         // 1. Solar Declination (Seasonal spiral between +23.44° and -23.44°)
         // Day 80 is approx Spring Equinox (March 21)
@@ -256,6 +265,7 @@ object CelestialEngine {
         return CelestialTelemetry(
             timestampMillis = timestampMillis,
             utcHourString = utcHourString,
+            localHourString = localHourString,
             dayOfYear = dayOfYear,
             seasonNameRu = seasonName,
             sunLatitude = sunDeclinationDeg,

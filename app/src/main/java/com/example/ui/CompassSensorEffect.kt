@@ -6,6 +6,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.view.Surface
+import android.view.WindowManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -27,12 +28,13 @@ fun CompassSensorEffect(
 }
 
 private class CompassSensorController(
-    context: Context,
+    private val context: Context,
     private val onOrientationChanged: (Float, Float) -> Unit
 ) : SensorEventListener {
     private val manager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val rotationSensor = manager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
     private val rotationMatrix = FloatArray(9)
+    private val remappedMatrix = FloatArray(9)
     private val orientation = FloatArray(3)
 
     fun start() {
@@ -48,13 +50,16 @@ private class CompassSensorController(
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type != Sensor.TYPE_ROTATION_VECTOR) return
         SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-        SensorManager.remapCoordinateSystem(
-            rotationMatrix,
-            SensorManager.AXIS_X,
-            SensorManager.AXIS_Z,
-            rotationMatrix
-        )
-        SensorManager.getOrientation(rotationMatrix, orientation)
+        val displayRotation = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+            .defaultDisplay.rotation
+        val (axisX, axisY) = when (displayRotation) {
+            Surface.ROTATION_90 -> SensorManager.AXIS_Y to SensorManager.AXIS_MINUS_X
+            Surface.ROTATION_180 -> SensorManager.AXIS_MINUS_X to SensorManager.AXIS_MINUS_Y
+            Surface.ROTATION_270 -> SensorManager.AXIS_MINUS_Y to SensorManager.AXIS_X
+            else -> SensorManager.AXIS_X to SensorManager.AXIS_Y
+        }
+        SensorManager.remapCoordinateSystem(rotationMatrix, axisX, axisY, remappedMatrix)
+        SensorManager.getOrientation(remappedMatrix, orientation)
 
         val azimuth = ((orientation[0] * 180f / PI.toFloat()) + 360f) % 360f
         // Android's positive pitch points opposite to the camera tilt expected

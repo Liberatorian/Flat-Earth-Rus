@@ -83,7 +83,7 @@ fun TelemetryAndControlBar(
 
                     Column {
                         Text(
-                            text = state.telemetry.utcHourString,
+                            text = state.telemetry.localHourString,
                             color = Color(0xFFF8FAFC),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
