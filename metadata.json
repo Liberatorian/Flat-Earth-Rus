@@ -1,6 +1,9 @@
 {
   "name": "Flat Earth Cosmos",
   "description": "Интерактивная небесная и физическая модель Плоской Земли с куполом, движением Солнца и Луны в реальном времени, фазами, звездным небом и видом наблюдателя.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": [
+    "ACCESS_COARSE_LOCATION",
+    "ACCESS_FINE_LOCATION"
+  ],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

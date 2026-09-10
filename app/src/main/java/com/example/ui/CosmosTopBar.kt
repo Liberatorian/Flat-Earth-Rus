@@ -24,11 +24,18 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,6 +55,7 @@ fun CosmosTopBar(
     onOpenTheory: () -> Unit,
     onOpenReference: () -> Unit,
     onToggleAmbientAudio: () -> Unit,
+    onAmbientVolumeChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -149,16 +157,39 @@ fun CosmosTopBar(
                         )
                     }
 
-                    IconButton(
-                        onClick = onToggleAmbientAudio,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Text(
-                            text = if (state.isAmbientAudioEnabled) "♫" else "♪",
-                            color = if (state.isAmbientAudioEnabled) Color(0xFF34D399) else Color(0xFF64748B),
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    var audioMenuExpanded by remember { mutableStateOf(false) }
+                    androidx.compose.foundation.layout.Box {
+                        IconButton(
+                            onClick = { audioMenuExpanded = true },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Text(
+                                text = if (state.isAmbientAudioEnabled) "♫" else "♪",
+                                color = if (state.isAmbientAudioEnabled) Color(0xFF34D399) else Color(0xFF64748B),
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = audioMenuExpanded,
+                            onDismissRequest = { audioMenuExpanded = false }
+                        ) {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("Фоновый звук", modifier = Modifier.weight(1f))
+                                    Switch(
+                                        checked = state.isAmbientAudioEnabled,
+                                        onCheckedChange = { onToggleAmbientAudio() }
+                                    )
+                                }
+                                Text("Громкость ${(state.ambientAudioVolume * 100).toInt()}%", fontSize = 12.sp)
+                                Slider(
+                                    value = state.ambientAudioVolume,
+                                    onValueChange = onAmbientVolumeChange,
+                                    modifier = Modifier.width(190.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }

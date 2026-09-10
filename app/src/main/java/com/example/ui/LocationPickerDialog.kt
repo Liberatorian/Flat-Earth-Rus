@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.AddLocation
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,6 +50,8 @@ fun LocationPickerDialog(
     currentCity: CityLocation,
     onSelectCity: (CityLocation) -> Unit,
     onCustomLocation: (lat: Double, lon: Double) -> Unit,
+    onRequestCurrentLocation: () -> Unit,
+    locationStatus: String?,
     onDismiss: () -> Unit
 ) {
     var showCustomInputs by remember { mutableStateOf(false) }
@@ -99,6 +102,26 @@ fun LocationPickerDialog(
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onRequestCurrentLocation,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF67E8F9))
+                ) {
+                    Icon(Icons.Default.MyLocation, contentDescription = null)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Определить мою геопозицию")
+                }
+                if (locationStatus != null) {
+                    Text(
+                        text = locationStatus,
+                        color = Color(0xFFBAE6FD),
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 if (!showCustomInputs) {
                     LazyColumn(

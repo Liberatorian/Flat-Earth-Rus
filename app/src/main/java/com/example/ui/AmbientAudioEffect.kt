@@ -5,18 +5,40 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
 
 @Composable
-fun AmbientAudioEffect(enabled: Boolean) {
+fun AmbientAudioEffect(enabled: Boolean, volume: Float) {
     val player = remember { ProceduralAmbientPlayer() }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(enabled) {
-        if (enabled) player.start() else player.stop()
-        onDispose { player.stop() }
+    LaunchedEffect(volume) {
+        player.setVolume(volume)
+    }
+
+    DisposableEffect(lifecycleOwner, enabled) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> if (enabled) player.start()
+                Lifecycle.Event.ON_STOP -> player.stop()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        if (enabled && lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            player.start()
+        }
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            player.stop()
+        }
     }
 }
 
@@ -26,6 +48,12 @@ private class ProceduralAmbientPlayer {
     private val frameCount = sampleRate * 2
     private var audioTrack: AudioTrack? = null
     private var worker: Thread? = null
+    private var volume = 0.35f
+
+    fun setVolume(value: Float) {
+        volume = value.coerceIn(0f, 1f)
+        audioTrack?.setVolume(volume)
+    }
 
     fun start() {
         if (worker?.isAlive == true) return
@@ -55,6 +83,7 @@ private class ProceduralAmbientPlayer {
             .build()
 
         audioTrack = track
+        track.setVolume(volume)
         worker = Thread {
             val buffer = ShortArray(frameCount)
             var phase = 0.0

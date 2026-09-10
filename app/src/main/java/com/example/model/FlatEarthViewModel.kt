@@ -49,6 +49,12 @@ data class ObserverCamera(
     val eyeHeightMeters: Double = 1.7
 )
 
+data class MapCamera(
+    val zoom: Float = 1.0f,
+    val panX: Float = 0f,
+    val panY: Float = 0f
+)
+
 data class FlatEarthAppState(
     val currentTimestampMillis: Long = System.currentTimeMillis(),
     val isRealTime: Boolean = false,
@@ -59,6 +65,7 @@ data class FlatEarthAppState(
     val observerLocation: CityLocation = PRESET_CITIES[0], // Moscow default
     val layers: LayerSettings = LayerSettings(),
     val camera3D: Camera3D = Camera3D(),
+    val mapCamera: MapCamera = MapCamera(),
     val observerCamera: ObserverCamera = ObserverCamera(),
     val telemetry: CelestialTelemetry = CelestialEngine.calculateState(
         System.currentTimeMillis(),
@@ -67,6 +74,7 @@ data class FlatEarthAppState(
     val showTheoryDialog: Boolean = false,
     val showReferenceDialog: Boolean = false,
     val isAmbientAudioEnabled: Boolean = false,
+    val ambientAudioVolume: Float = 0.35f,
     val isCompassModeEnabled: Boolean = false,
     val showObserverHud: Boolean = true,
     val showLocationPicker: Boolean = false,
@@ -217,6 +225,29 @@ class FlatEarthViewModel : ViewModel() {
         }
     }
 
+    fun updateMapZoom(delta: Float) {
+        _uiState.update {
+            it.copy(mapCamera = it.mapCamera.copy(zoom = (it.mapCamera.zoom + delta).coerceIn(1f, 2.5f)))
+        }
+    }
+
+    fun updateMapTransform(zoomFactor: Float, panX: Float, panY: Float) {
+        _uiState.update {
+            val camera = it.mapCamera
+            it.copy(
+                mapCamera = camera.copy(
+                    zoom = (camera.zoom * zoomFactor).coerceIn(1f, 2.5f),
+                    panX = (camera.panX + panX).coerceIn(-1600f, 1600f),
+                    panY = (camera.panY + panY).coerceIn(-1600f, 1600f)
+                )
+            )
+        }
+    }
+
+    fun resetMapZoom() {
+        _uiState.update { it.copy(mapCamera = MapCamera()) }
+    }
+
     fun toggleLayer(update: LayerSettings.() -> LayerSettings) {
         _uiState.update { it.copy(layers = it.layers.update()) }
     }
@@ -231,6 +262,10 @@ class FlatEarthViewModel : ViewModel() {
 
     fun setAmbientAudioEnabled(enabled: Boolean) {
         _uiState.update { it.copy(isAmbientAudioEnabled = enabled) }
+    }
+
+    fun setAmbientAudioVolume(volume: Float) {
+        _uiState.update { it.copy(ambientAudioVolume = volume.coerceIn(0f, 1f)) }
     }
 
     fun setCompassModeEnabled(enabled: Boolean) {

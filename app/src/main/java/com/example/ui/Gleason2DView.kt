@@ -1,13 +1,23 @@
 package com.example.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CenterFocusStrong
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +49,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.hypot
 
 /**
  * Gleason 2D Map: Standard Azimuthal Equidistant projection of the Flat Earth.
@@ -49,28 +60,56 @@ import kotlin.math.sqrt
 fun Gleason2DView(
     state: FlatEarthAppState,
     onTapLocation: (lat: Double, lon: Double) -> Unit,
+    onZoomIn: () -> Unit,
+    onZoomOut: () -> Unit,
+    onResetZoom: () -> Unit,
+    onTransform: (zoomFactor: Float, panX: Float, panY: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures { tapOffset ->
-                    // Calculate tapped lat/lon from click offset
-                    // Center and radius will be computed in canvas; approximate from box size
-                }
-            }
     ) {
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTapGestures { tapOffset ->
+                .pointerInput(state.mapCamera) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        var moved = false
+                        var lastPosition = down.position
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val pressedChanges = event.changes.filter { it.pressed }
+                            if (pressedChanges.isEmpty()) break
+
+                            if (pressedChanges.size >= 2) {
+                                val zoomFactor = event.calculateZoom()
+                                val pan = event.calculatePan()
+                                if (zoomFactor != 1f || pan != Offset.Zero) {
+                                    moved = true
+                                    onTransform(zoomFactor, pan.x, pan.y)
+                                }
+                                pressedChanges.forEach { it.consume() }
+                            } else {
+                                val change = pressedChanges.first()
+                                val delta = change.position - lastPosition
+                                if (hypot(delta.x.toDouble(), delta.y.toDouble()) > 2.0) {
+                                    moved = true
+                                    onTransform(1f, delta.x, delta.y)
+                                }
+                                lastPosition = change.position
+                                change.consume()
+                            }
+                        }
+
+                        if (!moved) {
+                            val tapOffset = down.position
                         val width = size.width
                         val height = size.height
-                        val centerX = width / 2f
-                        val centerY = height * 0.52f
-                        val discRadius = minOf(width, height) * 0.42f
+                        val centerX = width / 2f + state.mapCamera.panX
+                        val centerY = height * 0.52f + state.mapCamera.panY
+                        val discRadius = minOf(width, height) * 0.42f * state.mapCamera.zoom
 
                         val dx = tapOffset.x - centerX
                         val dy = tapOffset.y - centerY
@@ -84,14 +123,15 @@ fun Gleason2DView(
                             if (lon > 180) lon -= 360
                             onTapLocation(lat, lon)
                         }
+                        }
                     }
                 }
         ) {
             val width = size.width
             val height = size.height
-            val centerX = width / 2f
-            val centerY = height * 0.52f
-            val discRadius = minOf(width, height) * 0.42f
+            val centerX = width / 2f + state.mapCamera.panX
+            val centerY = height * 0.52f + state.mapCamera.panY
+            val discRadius = minOf(width, height) * 0.42f * state.mapCamera.zoom
 
             fun geoToPixel(latitude: Double, longitude: Double): Offset {
                 val (xKm, yKm) = com.example.model.CelestialEngine.geoToDiscKm(latitude, longitude, state.projection)
@@ -135,6 +175,24 @@ fun Gleason2DView(
                 val path = GleasonMapData.polygonToPath(continent, centerX, centerY, discRadius, state.projection)
                 drawPath(path = path, color = Color(0xFF1E3A2F))
                 drawPath(path = path, color = Color(0xFF34D399), style = Stroke(width = 1.4f))
+            }
+
+            val continentLabelPaint = android.graphics.Paint().apply {
+                color = android.graphics.Color.argb(220, 226, 232, 240)
+                textSize = 26f
+                textAlign = android.graphics.Paint.Align.CENTER
+                isFakeBoldText = true
+                isAntiAlias = true
+            }
+            listOf(
+                "ЕВРАЗИЯ" to Pair(52.0, 80.0),
+                "АФРИКА" to Pair(5.0, 20.0),
+                "СЕВЕРНАЯ АМЕРИКА" to Pair(48.0, -100.0),
+                "ЮЖНАЯ АМЕРИКА" to Pair(-18.0, -60.0),
+                "АВСТРАЛИЯ" to Pair(-25.0, 135.0)
+            ).forEach { (label, coordinates) ->
+                val labelPoint = geoToPixel(coordinates.first, coordinates.second)
+                drawContext.canvas.nativeCanvas.drawText(label, labelPoint.x, labelPoint.y, continentLabelPaint)
             }
 
             // 5. Draw Concentric Parallels (Tropics, Equator, Circles)
@@ -323,6 +381,32 @@ fun Gleason2DView(
                 lineHeight = 15.sp,
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
             )
+        }
+
+        Surface(
+            color = Color(0xDD0F172A),
+            shape = MaterialTheme.shapes.small,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(12.dp)
+        ) {
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(4.dp)
+            ) {
+                FilledIconButton(
+                    onClick = onZoomIn,
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFF0E7490))
+                ) { Icon(Icons.Default.Add, contentDescription = "Увеличить карту") }
+                Text("${(state.mapCamera.zoom * 100).toInt()}%", color = Color.White, fontSize = 11.sp)
+                FilledIconButton(
+                    onClick = onZoomOut,
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFF164E63))
+                ) { Icon(Icons.Default.Remove, contentDescription = "Уменьшить карту") }
+                androidx.compose.material3.IconButton(onClick = onResetZoom) {
+                    Icon(Icons.Default.CenterFocusStrong, contentDescription = "Сбросить масштаб", tint = Color(0xFFBAE6FD))
+                }
+            }
         }
     }
 }
