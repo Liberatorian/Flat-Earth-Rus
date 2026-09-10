@@ -58,10 +58,12 @@ fun FlatEarthCosmosApp(
                     locationStatus = null
                 } else {
                     locationStatus = "Позиция пока недоступна. Включите геолокацию и повторите попытку."
+                    viewModel.setShowLocationPicker(true)
                 }
             }
         } else {
             locationStatus = "Доступ к геопозиции не предоставлен. Координаты можно ввести вручную."
+            viewModel.setShowLocationPicker(true)
         }
     }
     val requestCurrentLocation: () -> Unit = {
@@ -82,6 +84,7 @@ fun FlatEarthCosmosApp(
                     locationStatus = null
                 } else {
                     locationStatus = "Позиция пока недоступна. Включите геолокацию и повторите попытку."
+                    viewModel.setShowLocationPicker(true)
                 }
             }
         } else {
@@ -89,6 +92,10 @@ fun FlatEarthCosmosApp(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
             )
         }
+    }
+
+    LaunchedEffect(Unit) {
+        requestCurrentLocation()
     }
 
     Scaffold(

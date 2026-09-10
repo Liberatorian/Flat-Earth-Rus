@@ -57,9 +57,9 @@ data class MapCamera(
 
 data class FlatEarthAppState(
     val currentTimestampMillis: Long = System.currentTimeMillis(),
-    val isRealTime: Boolean = false,
+    val isRealTime: Boolean = true,
     val isPlaying: Boolean = true,
-    val timeSpeedMultiplier: Double = 60.0, // 60x = 1 minute per real second
+    val timeSpeedMultiplier: Double = 1.0, // Real-time start; accelerated modes remain available
     val viewMode: ViewMode = ViewMode.DOME_3D,
     val projection: MapProjection = MapProjection.GLEASON_AE,
     val observerLocation: CityLocation = PRESET_CITIES[0], // Moscow default

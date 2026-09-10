@@ -6,6 +6,7 @@ import com.example.model.OpticsEngine
 import com.example.model.FlatEarthConstants
 import com.example.model.GleasonMapData
 import com.example.model.PRESET_CITIES
+import com.example.model.FlatEarthAppState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -101,6 +102,15 @@ class CelestialEngineTest {
         val center = GleasonMapData.POLAR_ICE_CONTINENT.first()
         val projected = CelestialEngine.geoToDiscKm(center.lat, center.lon)
         assertTrue(kotlin.math.hypot(projected.first, projected.second) < 500.0)
+    }
+
+    @Test
+    fun applicationStartsInRealTimeAtOneX() {
+        val state = FlatEarthAppState()
+
+        assertTrue(state.isRealTime)
+        assertEquals(1.0, state.timeSpeedMultiplier, 0.0)
+        assertTrue(kotlin.math.abs(state.currentTimestampMillis - System.currentTimeMillis()) < 2_000L)
     }
 
     private fun signedLongitudeDelta(first: Double, second: Double): Double {
