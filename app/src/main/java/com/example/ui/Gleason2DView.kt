@@ -118,7 +118,11 @@ fun Gleason2DView(
                         if (dist <= discRadius * 1.05f) {
                             val rNorm = (dist / discRadius).coerceIn(0f, 1f)
                             val lat = 90.0 - (rNorm * 180.0)
-                            var lon = Math.toDegrees(atan2(dx.toDouble(), -dy.toDouble()))
+                            var lon = if (dist < 1f) {
+                                0.0
+                            } else {
+                                Math.toDegrees(atan2(dx.toDouble(), -dy.toDouble()))
+                            }
                             if (lon < -180) lon += 360
                             if (lon > 180) lon -= 360
                             onTapLocation(lat, lon)
@@ -245,6 +249,27 @@ fun Gleason2DView(
                         strokeWidth = if (isPrime) 1.5f else 0.8f
                     )
                 }
+            }
+
+            val compassPaint = android.graphics.Paint().apply {
+                color = android.graphics.Color.argb(230, 248, 250, 252)
+                textSize = 24f
+                textAlign = android.graphics.Paint.Align.CENTER
+                isFakeBoldText = true
+                isAntiAlias = true
+            }
+            listOf(
+                "N" to Pair(0f, -discRadius * 0.9f),
+                "E" to Pair(discRadius * 0.9f, 0f),
+                "S" to Pair(0f, discRadius * 0.9f),
+                "W" to Pair(-discRadius * 0.9f, 0f)
+            ).forEach { (label, offset) ->
+                drawContext.canvas.nativeCanvas.drawText(
+                    label,
+                    centerX + offset.first,
+                    centerY + offset.second + if (label == "N") 8f else 0f,
+                    compassPaint
+                )
             }
 
             // 7. Draw Day / Night Spotlight Cone & Penumbra

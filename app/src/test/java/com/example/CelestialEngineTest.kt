@@ -24,6 +24,19 @@ class CelestialEngineTest {
     }
 
     @Test
+    fun northAzimuthalMapKeepsNorthUpEastRightAndWestLeft() {
+        val north = CelestialEngine.geoToDiscKm(60.0, 0.0)
+        val east = CelestialEngine.geoToDiscKm(60.0, 90.0)
+        val west = CelestialEngine.geoToDiscKm(60.0, -90.0)
+
+        assertEquals(0.0, north.first, 0.001)
+        assertTrue(north.second < 0.0)
+        assertTrue(east.first > 0.0)
+        assertTrue(west.first < 0.0)
+        assertEquals(kotlin.math.abs(east.first), kotlin.math.abs(west.first), 0.001)
+    }
+
+    @Test
     fun siderealClockIsBoundedAndAdvancesByAboutFourMinutesPerSolarDay() {
         val day = 86_400_000L
         val first = CelestialEngine.greenwichMeanSiderealTimeDegrees(0L)
