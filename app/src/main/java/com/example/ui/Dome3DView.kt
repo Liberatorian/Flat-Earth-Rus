@@ -9,6 +9,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +23,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.CONSTELLATION_LINES
@@ -28,8 +31,11 @@ import com.example.model.DomePhysicalSettings
 import com.example.model.FlatEarthAppState
 import com.example.model.FlatEarthConstants
 import com.example.model.GleasonMapData
+import com.example.model.GeoPoint
 import com.example.model.MAJOR_STARS
+import com.example.model.NaturalEarthLandData
 import com.example.model.PRESET_CITIES
+import com.example.model.ProjectedSceneLandPathCache
 import com.example.ui.theme.EquatorGold
 import com.example.ui.theme.GridCyan
 import com.example.ui.theme.IceBlue
@@ -42,6 +48,8 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 3D isometric/perspective projection of Flat Earth:
@@ -54,6 +62,12 @@ fun Dome3DView(
     onCameraDelta: (pitchDelta: Float, yawDelta: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val appContext = LocalContext.current.applicationContext
+    val landPolygons by produceState(initialValue = emptyList<List<GeoPoint>>(), key1 = appContext) {
+        value = withContext(Dispatchers.IO) { NaturalEarthLandData.load(appContext) }
+    }
+    val landPathCache = remember { ProjectedSceneLandPathCache() }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -124,8 +138,16 @@ fun Dome3DView(
                 baseRadius = baseRadius
             )
 
-            // 5. Draw Continents on the Disc
+            // 5. Draw detailed Natural Earth coastlines, cached per camera state.
             drawContinents3D(
+                polygons = landPolygons,
+                cache = landPathCache,
+                state = state,
+                centerX = centerX,
+                centerY = centerY,
+                baseRadius = baseRadius,
+                width = width,
+                height = height,
                 project = ::project3D
             )
 
@@ -325,24 +347,43 @@ private fun DrawScope.drawDiscCircle(
 }
 
 private fun DrawScope.drawContinents3D(
+    polygons: List<List<GeoPoint>>,
+    cache: ProjectedSceneLandPathCache,
+    state: FlatEarthAppState,
+    centerX: Float,
+    centerY: Float,
+    baseRadius: Float,
+    width: Float,
+    height: Float,
     project: (Double, Double, Double) -> Offset
 ) {
-    for (continent in GleasonMapData.ALL_CONTINENTS) {
-        val path = Path()
-        for (i in continent.indices) {
-            val pt = continent[i]
-            val (xKm, yKm) = com.example.model.CelestialEngine.geoToDiscKm(pt.lat, pt.lon)
-            val xNorm = xKm / FlatEarthConstants.DISC_RADIUS_KM
-            val yNorm = yKm / FlatEarthConstants.DISC_RADIUS_KM
-            val screenPt = project(xNorm, yNorm, 0.005)
-            if (i == 0) path.moveTo(screenPt.x, screenPt.y) else path.lineTo(screenPt.x, screenPt.y)
+    if (polygons.isNotEmpty()) {
+        val coastlines = cache.get(
+            polygons = polygons,
+            width = width,
+            height = height,
+            centerX = centerX,
+            centerY = centerY,
+            radius = baseRadius,
+            pitch = state.camera3D.pitchDeg,
+            yaw = state.camera3D.yawDeg,
+            projection = state.projection,
+            project = project
+        )
+        drawPath(coastlines, color = Color(0xFF1E3A2F))
+        drawPath(coastlines, color = Color(0x8034D399), style = Stroke(width = 0.8f))
+    } else {
+        for (continent in GleasonMapData.ALL_CONTINENTS) {
+            val fallback = Path()
+            for (point in continent) {
+                val (xKm, yKm) = com.example.model.CelestialEngine.geoToDiscKm(point.lat, point.lon, state.projection)
+                val screenPoint = project(xKm / FlatEarthConstants.DISC_RADIUS_KM, yKm / FlatEarthConstants.DISC_RADIUS_KM, 0.005)
+                if (fallback.isEmpty) fallback.moveTo(screenPoint.x, screenPoint.y) else fallback.lineTo(screenPoint.x, screenPoint.y)
+            }
+            fallback.close()
+            drawPath(fallback, color = Color(0xFF1E3A2F))
+            drawPath(fallback, color = Color(0x8034D399), style = Stroke(width = 0.8f))
         }
-        path.close()
-
-        // Continent fill: lush emerald-navy landmass
-        drawPath(path = path, color = Color(0xFF1E3A2F))
-        // Coastline stroke
-        drawPath(path = path, color = Color(0xFF34D399), style = Stroke(width = 1.2f))
     }
 }
 

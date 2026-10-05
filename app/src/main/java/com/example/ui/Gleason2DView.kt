@@ -19,6 +19,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -30,13 +33,17 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.CityLocation
 import com.example.model.FlatEarthAppState
 import com.example.model.FlatEarthConstants
 import com.example.model.GleasonMapData
+import com.example.model.GeoPoint
+import com.example.model.NaturalEarthLandData
 import com.example.model.PRESET_CITIES
+import com.example.model.ProjectedLandPathCache
 import com.example.ui.theme.EquatorGold
 import com.example.ui.theme.GridCyan
 import com.example.ui.theme.IceBlue
@@ -50,6 +57,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.hypot
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Gleason 2D Map: Standard Azimuthal Equidistant projection of the Flat Earth.
@@ -66,6 +75,12 @@ fun Gleason2DView(
     onTransform: (zoomFactor: Float, panX: Float, panY: Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val appContext = LocalContext.current.applicationContext
+    val landPolygons by produceState(initialValue = emptyList<List<GeoPoint>>(), key1 = appContext) {
+        value = withContext(Dispatchers.IO) { NaturalEarthLandData.load(appContext) }
+    }
+    val landPathCache = remember { ProjectedLandPathCache() }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -183,25 +198,28 @@ fun Gleason2DView(
                 style = Stroke(width = iceWallThickness)
             )
 
-            // 4. Draw Continents on the Flat Disc
-            for (continent in GleasonMapData.ALL_CONTINENTS) {
-                val path = GleasonMapData.polygonToPath(
-                    continent,
-                    centerX,
-                    centerY,
-                    discRadius,
-                    state.projection,
+            // Use detailed real-world coastlines; keep the hand-drawn sketch as a fallback.
+            if (landPolygons.isNotEmpty()) {
+                val landPath = landPathCache.get(
+                    polygons = landPolygons,
+                    width = width,
+                    height = height,
+                    centerX = centerX,
+                    centerY = centerY,
+                    radius = discRadius,
+                    projection = state.projection,
                     flipY = true
                 )
-                val polar = continent in GleasonMapData.ARCTIC_CONTINENTS
-                if (polar) {
-                    drawPath(path, color = Color(0x3021A7A1), style = Stroke(width = 7f))
-                    drawPath(path, color = Color(0x5038BDF8), style = Stroke(width = 3f))
-                } else {
-                    drawPath(path, color = Color(0x5021A7A1), style = Stroke(width = 10f))
+                drawPath(landPath, color = Color(0xFF1E3A2F))
+                drawPath(landPath, color = Color(0x8034D399), style = Stroke(width = 0.8f))
+            } else {
+                for (continent in GleasonMapData.ALL_CONTINENTS) {
+                    val fallbackPath = GleasonMapData.polygonToPath(
+                        continent, centerX, centerY, discRadius, state.projection, flipY = true
+                    )
+                    drawPath(fallbackPath, color = Color(0xFF1E3A2F))
+                    drawPath(fallbackPath, color = Color(0x8034D399), style = Stroke(width = 0.8f))
                 }
-                drawPath(path = path, color = if (polar) Color(0xFF9AC9B8) else Color(0xFF1E3A2F))
-                drawPath(path = path, color = if (polar) Color(0xFFB9E4D2) else Color(0xFF34D399), style = Stroke(width = 1.4f))
             }
 
             val continentLabelPaint = android.graphics.Paint().apply {
@@ -216,14 +234,10 @@ fun Gleason2DView(
                 "АФРИКА" to Pair(5.0, 20.0),
                 "СЕВЕРНАЯ АМЕРИКА" to Pair(48.0, -100.0),
                 "ЮЖНАЯ АМЕРИКА" to Pair(-18.0, -60.0),
-                "АВСТРАЛИЯ" to Pair(-25.0, 135.0),
-                "I" to Pair(84.0, 30.0),
-                "II" to Pair(84.0, 100.0),
-                "III" to Pair(84.0, 180.0),
-                "IV" to Pair(84.0, -110.0)
+                "АВСТРАЛИЯ" to Pair(-25.0, 135.0)
             ).forEach { (label, coordinates) ->
                 val labelPoint = geoToPixel(coordinates.first, coordinates.second)
-                continentLabelPaint.textSize = if (label in setOf("I", "II", "III", "IV")) 18f else 26f
+                continentLabelPaint.textSize = 26f
                 drawContext.canvas.nativeCanvas.drawText(label, labelPoint.x, labelPoint.y, continentLabelPaint)
             }
 
@@ -429,7 +443,11 @@ fun Gleason2DView(
                 .padding(12.dp)
         ) {
             Text(
-                text = "КАРТА 2D • ВИД СНИЗУ • 4 полярные земли — схема по Меркатору\nI–IV: гипотетическая реконструкция • касание задаёт наблюдателя",
+                text = if (landPolygons.isNotEmpty()) {
+                    "КАРТА 2D • ВИД СНИЗУ • БЕРЕГОВЫЕ ДАННЫЕ NATURAL EARTH 1:50m\nВсе контуры проходят через выбранную полярную проекцию • касание задаёт наблюдателя"
+                } else {
+                    "КАРТА 2D • резервные упрощённые контуры\nНабор Natural Earth не загрузился • касание задаёт наблюдателя"
+                },
                 color = Color(0xFF94A3B8),
                 fontSize = 11.sp,
                 lineHeight = 15.sp,

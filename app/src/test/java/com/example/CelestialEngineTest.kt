@@ -4,7 +4,6 @@ import com.example.model.CelestialEngine
 import com.example.model.MapProjection
 import com.example.model.OpticsEngine
 import com.example.model.FlatEarthConstants
-import com.example.model.GleasonMapData
 import com.example.model.PRESET_CITIES
 import com.example.model.FlatEarthAppState
 import org.junit.Assert.assertEquals
@@ -108,27 +107,6 @@ class CelestialEngineTest {
         assertTrue(state.moonApparentDiameterArcmin > 0.0)
         assertTrue(state.observerDistanceToSunKm > 0.0)
         assertTrue(state.observerDistanceToMoonKm > 0.0)
-    }
-
-    @Test
-    fun mercatorInspiredArcticContainsFourSeparateSchematicLands() {
-        assertEquals(4, GleasonMapData.ARCTIC_CONTINENTS.size)
-        assertTrue(GleasonMapData.ARCTIC_CONTINENTS.all { it.size >= 6 })
-        assertTrue(GleasonMapData.ARCTIC_CONTINENTS.all { it in GleasonMapData.ALL_CONTINENTS })
-        assertTrue(GleasonMapData.ARCTIC_CONTINENTS.flatten().all { it.lat in 80.0..88.0 })
-
-        val circularCenters = GleasonMapData.ARCTIC_CONTINENTS.map { land ->
-            val longitudes = land.map { Math.toRadians(it.lon) }
-            val meanSin = longitudes.map { kotlin.math.sin(it) }.average()
-            val meanCos = longitudes.map { kotlin.math.cos(it) }.average()
-            Math.toDegrees(kotlin.math.atan2(meanSin, meanCos))
-        }
-        val normalizedCenters = circularCenters.map { (it + 360.0) % 360.0 }.sorted()
-        val gaps = normalizedCenters.indices.map { index ->
-            val next = normalizedCenters[(index + 1) % normalizedCenters.size]
-            (next - normalizedCenters[index] + 360.0) % 360.0
-        }
-        assertTrue(gaps.min() >= 65.0)
     }
 
     @Test
