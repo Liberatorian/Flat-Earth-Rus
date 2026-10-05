@@ -23,6 +23,8 @@ class NaturalEarthLandDataTest {
         assertTrue("Svalbard should be represented", allPoints.hasPointNear(78.0, 18.0, 5.0))
         assertTrue("Madagascar should be represented", allPoints.hasPointNear(-20.0, 47.0, 5.0))
         assertTrue("New Zealand should be represented", allPoints.hasPointNear(-42.0, 173.0, 5.0))
+        assertTrue("Antarctica should be replaced by the model ice wall", allPoints.none { it.lat <= -85.0 })
+        assertTrue("South Georgia should remain as an island", allPoints.hasPointNear(-54.0, -37.0, 4.0))
     }
 
     private fun List<GeoPoint>.hasPointNear(latitude: Double, longitude: Double, tolerance: Double): Boolean =

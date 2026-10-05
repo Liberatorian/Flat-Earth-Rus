@@ -19,6 +19,7 @@ object NaturalEarthLandData {
             for (featureIndex in 0 until features.length()) {
                 val feature = features.getJSONObject(featureIndex)
                 if (feature.isNull("geometry")) continue
+                if (feature.representsAntarcticContinent()) continue
                 val geometry = feature.getJSONObject("geometry")
                 when (geometry.getString("type")) {
                     "Polygon" -> addOuterRing(geometry.getJSONArray("coordinates").getJSONArray(0))
@@ -33,6 +34,15 @@ object NaturalEarthLandData {
             }
         }.filter { it.size >= 4 }
     }.getOrDefault(emptyList())
+
+    private fun JSONObject.representsAntarcticContinent(): Boolean {
+        val bounds = optJSONArray("bbox") ?: return false
+        if (bounds.length() < 4) return false
+        val south = bounds.getDouble(1)
+        val north = bounds.getDouble(3)
+        val longitudeSpan = bounds.getDouble(2) - bounds.getDouble(0)
+        return south <= -85.0 && north < -55.0 && longitudeSpan > 300.0
+    }
 
     private fun MutableList<List<GeoPoint>>.addOuterRing(ring: org.json.JSONArray) {
         val points = ArrayList<GeoPoint>(ring.length())
