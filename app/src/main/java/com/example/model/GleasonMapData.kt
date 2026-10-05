@@ -160,18 +160,29 @@ object GleasonMapData {
         GeoPoint(-12.0, 49.0)
     )
 
-    // Model feature shown beneath the polar ice on the historical-style map.
-    // It is not presented as verified geography.
-    val POLAR_ICE_CONTINENT = listOf(
-        GeoPoint(88.0, 0.0),
-        GeoPoint(87.0, 45.0),
-        GeoPoint(86.0, 90.0),
-        GeoPoint(87.0, 135.0),
-        GeoPoint(88.0, 180.0),
-        GeoPoint(87.0, -135.0),
-        GeoPoint(86.0, -90.0),
-        GeoPoint(87.0, -45.0),
-        GeoPoint(88.0, 0.0)
+    // Four fictional polar landmasses inspired by the four-island motif on
+    // Gerardus Mercator's 1595 Arctic map. They are illustrative, not geography.
+    val ARCTIC_CONTINENTS = listOf(
+        listOf(
+            GeoPoint(80.0, -38.0), GeoPoint(75.0, -28.0), GeoPoint(68.0, -14.0),
+            GeoPoint(69.0, 0.0), GeoPoint(73.0, 16.0), GeoPoint(79.0, 24.0),
+            GeoPoint(82.0, 10.0), GeoPoint(81.0, -15.0)
+        ),
+        listOf(
+            GeoPoint(80.0, 52.0), GeoPoint(75.0, 62.0), GeoPoint(68.0, 76.0),
+            GeoPoint(69.0, 90.0), GeoPoint(73.0, 106.0), GeoPoint(79.0, 114.0),
+            GeoPoint(82.0, 100.0), GeoPoint(81.0, 75.0)
+        ),
+        listOf(
+            GeoPoint(80.0, 142.0), GeoPoint(75.0, 152.0), GeoPoint(68.0, 166.0),
+            GeoPoint(69.0, -180.0), GeoPoint(73.0, -164.0), GeoPoint(79.0, -156.0),
+            GeoPoint(82.0, -170.0), GeoPoint(81.0, 165.0)
+        ),
+        listOf(
+            GeoPoint(80.0, -128.0), GeoPoint(75.0, -118.0), GeoPoint(68.0, -104.0),
+            GeoPoint(69.0, -90.0), GeoPoint(73.0, -74.0), GeoPoint(79.0, -66.0),
+            GeoPoint(82.0, -80.0), GeoPoint(81.0, -105.0)
+        )
     )
 
     val ALL_CONTINENTS = listOf(
@@ -184,8 +195,7 @@ object GleasonMapData {
         AUSTRALIA,
         JAPAN,
         MADAGASCAR,
-        POLAR_ICE_CONTINENT
-    )
+    ) + ARCTIC_CONTINENTS
 
     /**
      * Converts a polygon of geo points into a Compose Path scaled to canvas center and radius.
@@ -195,7 +205,8 @@ object GleasonMapData {
         centerX: Float,
         centerY: Float,
         discRadiusPx: Float,
-        projection: MapProjection = MapProjection.GLEASON_AE
+        projection: MapProjection = MapProjection.GLEASON_AE,
+        flipY: Boolean = false
     ): Path {
         val path = Path()
         if (points.isEmpty()) return path
@@ -204,7 +215,7 @@ object GleasonMapData {
             val (xKm, yKm) = CelestialEngine.geoToDiscKm(point.lat, point.lon, projection)
             Offset(
                 centerX + (xKm / FlatEarthConstants.DISC_RADIUS_KM * discRadiusPx).toFloat(),
-                centerY + (yKm / FlatEarthConstants.DISC_RADIUS_KM * discRadiusPx).toFloat()
+                centerY + (yKm / FlatEarthConstants.DISC_RADIUS_KM * discRadiusPx).toFloat() * (if (flipY) -1f else 1f)
             )
         }
         if (projected.size == 1) {

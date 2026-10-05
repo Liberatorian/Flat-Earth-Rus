@@ -111,11 +111,18 @@ class CelestialEngineTest {
     }
 
     @Test
-    fun polarIceContinentIsPresentAtTheDiscCenter() {
-        assertTrue(GleasonMapData.ALL_CONTINENTS.contains(GleasonMapData.POLAR_ICE_CONTINENT))
-        val center = GleasonMapData.POLAR_ICE_CONTINENT.first()
-        val projected = CelestialEngine.geoToDiscKm(center.lat, center.lon)
-        assertTrue(kotlin.math.hypot(projected.first, projected.second) < 500.0)
+    fun mercatorInspiredArcticContainsFourSeparateSchematicLands() {
+        assertEquals(4, GleasonMapData.ARCTIC_CONTINENTS.size)
+        assertTrue(GleasonMapData.ARCTIC_CONTINENTS.all { it.size >= 6 })
+        assertTrue(GleasonMapData.ARCTIC_CONTINENTS.all { it in GleasonMapData.ALL_CONTINENTS })
+
+        val circularCenters = GleasonMapData.ARCTIC_CONTINENTS.map { land ->
+            val longitudes = land.map { Math.toRadians(it.lon) }
+            val meanSin = longitudes.map { kotlin.math.sin(it) }.average()
+            val meanCos = longitudes.map { kotlin.math.cos(it) }.average()
+            Math.toDegrees(kotlin.math.atan2(meanSin, meanCos))
+        }
+        assertEquals(4, circularCenters.map { kotlin.math.round(it / 10.0).toInt() }.distinct().size)
     }
 
     @Test

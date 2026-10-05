@@ -112,7 +112,7 @@ fun Gleason2DView(
                         val discRadius = minOf(width, height) * 0.42f * state.mapCamera.zoom
 
                         val dx = tapOffset.x - centerX
-                        val dy = tapOffset.y - centerY
+                        val dy = -(tapOffset.y - centerY)
                         val dist = sqrt(dx * dx + dy * dy)
 
                         if (dist <= discRadius * 1.05f) {
@@ -141,7 +141,7 @@ fun Gleason2DView(
                 val (xKm, yKm) = com.example.model.CelestialEngine.geoToDiscKm(latitude, longitude, state.projection)
                 return Offset(
                     centerX + (xKm / FlatEarthConstants.DISC_RADIUS_KM * discRadius).toFloat(),
-                    centerY + (yKm / FlatEarthConstants.DISC_RADIUS_KM * discRadius).toFloat()
+                    centerY - (yKm / FlatEarthConstants.DISC_RADIUS_KM * discRadius).toFloat()
                 )
             }
 
@@ -157,6 +157,15 @@ fun Gleason2DView(
             // 2. Draw Ocean Disc Base
             drawCircle(
                 color = Color(0xFF091428),
+                radius = discRadius,
+                center = Offset(centerX, centerY)
+            )
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFF07111F), Color(0xFF102238), Color(0xFF173247)),
+                    center = Offset(centerX, centerY),
+                    radius = discRadius
+                ),
                 radius = discRadius,
                 center = Offset(centerX, centerY)
             )
@@ -176,10 +185,23 @@ fun Gleason2DView(
 
             // 4. Draw Continents on the Flat Disc
             for (continent in GleasonMapData.ALL_CONTINENTS) {
-                val path = GleasonMapData.polygonToPath(continent, centerX, centerY, discRadius, state.projection)
-                val polar = continent === GleasonMapData.POLAR_ICE_CONTINENT
-                drawPath(path = path, color = if (polar) Color(0xFFBFE8F5) else Color(0xFF1E3A2F))
-                drawPath(path = path, color = if (polar) Color(0xFFE0F2FE) else Color(0xFF34D399), style = Stroke(width = 1.4f))
+                val path = GleasonMapData.polygonToPath(
+                    continent,
+                    centerX,
+                    centerY,
+                    discRadius,
+                    state.projection,
+                    flipY = true
+                )
+                val polar = continent in GleasonMapData.ARCTIC_CONTINENTS
+                if (polar) {
+                    drawPath(path, color = Color(0x4021A7A1), style = Stroke(width = 16f))
+                    drawPath(path, color = Color(0x7038BDF8), style = Stroke(width = 8f))
+                } else {
+                    drawPath(path, color = Color(0x5021A7A1), style = Stroke(width = 10f))
+                }
+                drawPath(path = path, color = if (polar) Color(0xFF9AC9B8) else Color(0xFF1E3A2F))
+                drawPath(path = path, color = if (polar) Color(0xFFB9E4D2) else Color(0xFF34D399), style = Stroke(width = 1.4f))
             }
 
             val continentLabelPaint = android.graphics.Paint().apply {
@@ -195,43 +217,48 @@ fun Gleason2DView(
                 "СЕВЕРНАЯ АМЕРИКА" to Pair(48.0, -100.0),
                 "ЮЖНАЯ АМЕРИКА" to Pair(-18.0, -60.0),
                 "АВСТРАЛИЯ" to Pair(-25.0, 135.0),
-                "ПОЛЯРНАЯ ЗЕМЛЯ\nПОД ЛЬДАМИ" to Pair(87.0, 0.0)
+                "I" to Pair(74.0, -5.0),
+                "II" to Pair(74.0, 85.0),
+                "III" to Pair(74.0, 175.0),
+                "IV" to Pair(74.0, -95.0)
             ).forEach { (label, coordinates) ->
                 val labelPoint = geoToPixel(coordinates.first, coordinates.second)
+                continentLabelPaint.textSize = if (label in setOf("I", "II", "III", "IV")) 18f else 26f
                 drawContext.canvas.nativeCanvas.drawText(label, labelPoint.x, labelPoint.y, continentLabelPaint)
             }
 
             // 5. Draw Concentric Parallels (Tropics, Equator, Circles)
             if (state.layers.showTropicsAndEquator) {
+                val underWorldScale = 0.96f
                 drawCircle(
-                    color = IceBlue.copy(alpha = 0.5f),
-                    radius = discRadius * (FlatEarthConstants.ARCTIC_CIRCLE_KM / FlatEarthConstants.DISC_RADIUS_KM).toFloat(),
+                    color = IceBlue.copy(alpha = 0.38f),
+                    radius = (discRadius * underWorldScale * (FlatEarthConstants.ARCTIC_CIRCLE_KM / FlatEarthConstants.DISC_RADIUS_KM)).toFloat(),
                     center = Offset(centerX, centerY),
-                    style = Stroke(width = 1.2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
+                    style = Stroke(width = 1.1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 5f)))
                 )
                 drawCircle(
-                    color = TropicRed,
-                    radius = discRadius * (FlatEarthConstants.TROPIC_CANCER_KM / FlatEarthConstants.DISC_RADIUS_KM).toFloat(),
+                    color = TropicRed.copy(alpha = 0.7f),
+                    radius = (discRadius * underWorldScale * (FlatEarthConstants.TROPIC_CANCER_KM / FlatEarthConstants.DISC_RADIUS_KM)).toFloat(),
                     center = Offset(centerX, centerY),
-                    style = Stroke(width = 1.8f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)))
+                    style = Stroke(width = 1.5f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(7f, 7f)))
                 )
                 drawCircle(
-                    color = EquatorGold,
-                    radius = discRadius * (FlatEarthConstants.EQUATOR_RADIUS_KM / FlatEarthConstants.DISC_RADIUS_KM).toFloat(),
+                    color = EquatorGold.copy(alpha = 0.9f),
+                    radius = (discRadius * underWorldScale * (FlatEarthConstants.EQUATOR_RADIUS_KM / FlatEarthConstants.DISC_RADIUS_KM)).toFloat(),
                     center = Offset(centerX, centerY),
-                    style = Stroke(width = 2.2f)
+                    style = Stroke(width = 2.0f)
                 )
                 drawCircle(
-                    color = TropicRed,
-                    radius = discRadius * (FlatEarthConstants.TROPIC_CAPRICORN_KM / FlatEarthConstants.DISC_RADIUS_KM).toFloat(),
+                    color = TropicRed.copy(alpha = 0.7f),
+                    radius = (discRadius * underWorldScale * (FlatEarthConstants.TROPIC_CAPRICORN_KM / FlatEarthConstants.DISC_RADIUS_KM)).toFloat(),
                     center = Offset(centerX, centerY),
-                    style = Stroke(width = 1.8f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)))
+                    style = Stroke(width = 1.5f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(7f, 7f)))
                 )
                 drawCircle(
-                    color = IceWallCyan.copy(alpha = 0.6f),
-                    radius = discRadius * (FlatEarthConstants.ANTARCTIC_CIRCLE_KM / FlatEarthConstants.DISC_RADIUS_KM).toFloat(),
+                    color = IceWallCyan.copy(alpha = 0.45f),
+                    radius = (discRadius * underWorldScale * (FlatEarthConstants.ANTARCTIC_CIRCLE_KM / FlatEarthConstants.DISC_RADIUS_KM)).toFloat(),
                     center = Offset(centerX, centerY),
-                    style = Stroke(width = 1.5f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)))
+                    style = Stroke(width = 1.3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
                 )
             }
 
@@ -240,13 +267,13 @@ fun Gleason2DView(
                 for (h in 0 until 24) {
                     val angleRad = h * (2.0 * PI / 24.0)
                     val endX = centerX + discRadius * sin(angleRad).toFloat()
-                    val endY = centerY - discRadius * cos(angleRad).toFloat()
+                    val endY = centerY + discRadius * cos(angleRad).toFloat()
                     val isPrime = (h == 0 || h == 12)
                     drawLine(
-                        color = if (isPrime) GridCyan.copy(alpha = 0.6f) else GridCyan.copy(alpha = 0.2f),
+                        color = if (isPrime) GridCyan.copy(alpha = 0.4f) else GridCyan.copy(alpha = 0.16f),
                         start = Offset(centerX, centerY),
                         end = Offset(endX, endY),
-                        strokeWidth = if (isPrime) 1.5f else 0.8f
+                        strokeWidth = if (isPrime) 1.2f else 0.6f
                     )
                 }
             }
@@ -259,15 +286,15 @@ fun Gleason2DView(
                 isAntiAlias = true
             }
             listOf(
-                "N" to Pair(0f, -discRadius * 0.9f),
+                "N" to Pair(0f, discRadius * 0.9f),
                 "E" to Pair(discRadius * 0.9f, 0f),
-                "S" to Pair(0f, discRadius * 0.9f),
+                "S" to Pair(0f, -discRadius * 0.9f),
                 "W" to Pair(-discRadius * 0.9f, 0f)
             ).forEach { (label, offset) ->
                 drawContext.canvas.nativeCanvas.drawText(
                     label,
                     centerX + offset.first,
-                    centerY + offset.second + if (label == "N") 8f else 0f,
+                    centerY + offset.second + if (label == "S") 8f else 0f,
                     compassPaint
                 )
             }
@@ -385,7 +412,7 @@ fun Gleason2DView(
                 val angleRad = h * (2.0 * PI / 24.0)
                 val rText = discRadius + 22f
                 val tx = centerX + rText * sin(angleRad).toFloat()
-                val ty = centerY - rText * cos(angleRad).toFloat() + 8f
+                val ty = centerY + rText * cos(angleRad).toFloat() + 8f
                 val hourLabel = String.format("%02d:00", (12 + h) % 24)
                 if (h % 3 == 0) {
                     drawContext.canvas.nativeCanvas.drawText(hourLabel, tx, ty, clockPaint)
@@ -402,7 +429,7 @@ fun Gleason2DView(
                 .padding(12.dp)
         ) {
             Text(
-                text = "КАРТА ГЛИСОНА (2D) • Координатная сетка • Солнечный циферблат 24ч\n(Нажмите в любую точку карты для переноса наблюдателя)",
+                text = "КАРТА 2D • ВИД СНИЗУ • 4 полярные земли — схема по Меркатору\nI–IV: гипотетическая реконструкция • касание задаёт наблюдателя",
                 color = Color(0xFF94A3B8),
                 fontSize = 11.sp,
                 lineHeight = 15.sp,
