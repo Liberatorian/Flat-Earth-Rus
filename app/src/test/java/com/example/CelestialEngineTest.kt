@@ -115,6 +115,7 @@ class CelestialEngineTest {
         assertEquals(4, GleasonMapData.ARCTIC_CONTINENTS.size)
         assertTrue(GleasonMapData.ARCTIC_CONTINENTS.all { it.size >= 6 })
         assertTrue(GleasonMapData.ARCTIC_CONTINENTS.all { it in GleasonMapData.ALL_CONTINENTS })
+        assertTrue(GleasonMapData.ARCTIC_CONTINENTS.flatten().all { it.lat in 80.0..88.0 })
 
         val circularCenters = GleasonMapData.ARCTIC_CONTINENTS.map { land ->
             val longitudes = land.map { Math.toRadians(it.lon) }
@@ -122,7 +123,12 @@ class CelestialEngineTest {
             val meanCos = longitudes.map { kotlin.math.cos(it) }.average()
             Math.toDegrees(kotlin.math.atan2(meanSin, meanCos))
         }
-        assertEquals(4, circularCenters.map { kotlin.math.round(it / 10.0).toInt() }.distinct().size)
+        val normalizedCenters = circularCenters.map { (it + 360.0) % 360.0 }.sorted()
+        val gaps = normalizedCenters.indices.map { index ->
+            val next = normalizedCenters[(index + 1) % normalizedCenters.size]
+            (next - normalizedCenters[index] + 360.0) % 360.0
+        }
+        assertTrue(gaps.min() >= 65.0)
     }
 
     @Test

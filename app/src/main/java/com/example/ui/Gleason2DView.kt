@@ -195,8 +195,8 @@ fun Gleason2DView(
                 )
                 val polar = continent in GleasonMapData.ARCTIC_CONTINENTS
                 if (polar) {
-                    drawPath(path, color = Color(0x4021A7A1), style = Stroke(width = 16f))
-                    drawPath(path, color = Color(0x7038BDF8), style = Stroke(width = 8f))
+                    drawPath(path, color = Color(0x3021A7A1), style = Stroke(width = 7f))
+                    drawPath(path, color = Color(0x5038BDF8), style = Stroke(width = 3f))
                 } else {
                     drawPath(path, color = Color(0x5021A7A1), style = Stroke(width = 10f))
                 }
@@ -217,10 +217,10 @@ fun Gleason2DView(
                 "СЕВЕРНАЯ АМЕРИКА" to Pair(48.0, -100.0),
                 "ЮЖНАЯ АМЕРИКА" to Pair(-18.0, -60.0),
                 "АВСТРАЛИЯ" to Pair(-25.0, 135.0),
-                "I" to Pair(74.0, -5.0),
-                "II" to Pair(74.0, 85.0),
-                "III" to Pair(74.0, 175.0),
-                "IV" to Pair(74.0, -95.0)
+                "I" to Pair(84.0, 30.0),
+                "II" to Pair(84.0, 100.0),
+                "III" to Pair(84.0, 180.0),
+                "IV" to Pair(84.0, -110.0)
             ).forEach { (label, coordinates) ->
                 val labelPoint = geoToPixel(coordinates.first, coordinates.second)
                 continentLabelPaint.textSize = if (label in setOf("I", "II", "III", "IV")) 18f else 26f

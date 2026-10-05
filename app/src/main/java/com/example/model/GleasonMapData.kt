@@ -164,24 +164,24 @@ object GleasonMapData {
     // Gerardus Mercator's 1595 Arctic map. They are illustrative, not geography.
     val ARCTIC_CONTINENTS = listOf(
         listOf(
-            GeoPoint(80.0, -38.0), GeoPoint(75.0, -28.0), GeoPoint(68.0, -14.0),
-            GeoPoint(69.0, 0.0), GeoPoint(73.0, 16.0), GeoPoint(79.0, 24.0),
-            GeoPoint(82.0, 10.0), GeoPoint(81.0, -15.0)
+            GeoPoint(86.0, 8.0), GeoPoint(84.0, 14.0), GeoPoint(80.0, 22.0),
+            GeoPoint(80.0, 38.0), GeoPoint(84.0, 46.0), GeoPoint(86.0, 52.0),
+            GeoPoint(88.0, 42.0), GeoPoint(88.0, 18.0)
         ),
         listOf(
-            GeoPoint(80.0, 52.0), GeoPoint(75.0, 62.0), GeoPoint(68.0, 76.0),
-            GeoPoint(69.0, 90.0), GeoPoint(73.0, 106.0), GeoPoint(79.0, 114.0),
-            GeoPoint(82.0, 100.0), GeoPoint(81.0, 75.0)
+            GeoPoint(86.0, 78.0), GeoPoint(84.0, 84.0), GeoPoint(80.0, 92.0),
+            GeoPoint(80.0, 108.0), GeoPoint(84.0, 116.0), GeoPoint(86.0, 122.0),
+            GeoPoint(88.0, 112.0), GeoPoint(88.0, 88.0)
         ),
         listOf(
-            GeoPoint(80.0, 142.0), GeoPoint(75.0, 152.0), GeoPoint(68.0, 166.0),
-            GeoPoint(69.0, -180.0), GeoPoint(73.0, -164.0), GeoPoint(79.0, -156.0),
-            GeoPoint(82.0, -170.0), GeoPoint(81.0, 165.0)
+            GeoPoint(86.0, 158.0), GeoPoint(84.0, 164.0), GeoPoint(80.0, 172.0),
+            GeoPoint(80.0, -172.0), GeoPoint(84.0, -164.0), GeoPoint(86.0, -158.0),
+            GeoPoint(88.0, -168.0), GeoPoint(88.0, 168.0)
         ),
         listOf(
-            GeoPoint(80.0, -128.0), GeoPoint(75.0, -118.0), GeoPoint(68.0, -104.0),
-            GeoPoint(69.0, -90.0), GeoPoint(73.0, -74.0), GeoPoint(79.0, -66.0),
-            GeoPoint(82.0, -80.0), GeoPoint(81.0, -105.0)
+            GeoPoint(86.0, -132.0), GeoPoint(84.0, -126.0), GeoPoint(80.0, -118.0),
+            GeoPoint(80.0, -102.0), GeoPoint(84.0, -94.0), GeoPoint(86.0, -88.0),
+            GeoPoint(88.0, -98.0), GeoPoint(88.0, -122.0)
         )
     )
 
