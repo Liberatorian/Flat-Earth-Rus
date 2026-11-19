@@ -6,6 +6,7 @@ import com.example.model.OpticsEngine
 import com.example.model.FlatEarthConstants
 import com.example.model.PRESET_CITIES
 import com.example.model.FlatEarthAppState
+import com.example.model.CelestialModelMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -88,6 +89,14 @@ class CelestialEngineTest {
     }
 
     @Test
+    fun crownCurveDomeFallsToRimAndHasAlternatingRibs() {
+        assertEquals(0.0, FlatEarthConstants.domeHeightAtRadiusKm(1.0), 0.001)
+        val firstRib = FlatEarthConstants.domeHeightAtRadiusKm(0.5, 0.0)
+        val secondRib = FlatEarthConstants.domeHeightAtRadiusKm(0.5, Math.PI / 14.0)
+        assertTrue(firstRib != secondRib)
+    }
+
+    @Test
     fun moonFollowsSunInSameDirectionButSlightlySlower() {
         val first = CelestialEngine.calculateState(1_700_000_000_000L, PRESET_CITIES[0])
         val second = CelestialEngine.calculateState(1_700_000_000_000L + 3_600_000L, PRESET_CITIES[0])
@@ -133,6 +142,20 @@ class CelestialEngineTest {
 
         assertEquals(expected, telemetry.localHourString)
         assertTrue(telemetry.utcHourString.endsWith(" UTC"))
+    }
+
+    @Test
+    fun scientificModelUsesLocalHorizontalCoordinatesAndStableSolarDiameter() {
+        val telemetry = CelestialEngine.calculateState(
+            1_700_000_000_000L,
+            PRESET_CITIES[0],
+            model = CelestialModelMode.SCIENTIFIC
+        )
+
+        assertTrue(telemetry.sunGeometricAltitudeDeg in -90.0..90.0)
+        assertTrue(telemetry.sunApparentAzimuthDeg in 0.0..360.0)
+        assertTrue(telemetry.sunApparentDiameterArcmin in 30.0..34.0)
+        assertEquals(384_400.0, telemetry.observerDistanceToMoonKm, 0.1)
     }
 
     private fun signedLongitudeDelta(first: Double, second: Double): Double {
