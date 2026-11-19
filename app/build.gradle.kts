@@ -17,8 +17,8 @@ android {
     applicationId = "com.aistudio.flatearth.vxtkq"
     minSdk = 24
     targetSdk = 36
-    versionCode = 9
-    versionName = "1.8"
+    versionCode = 10
+    versionName = "1.12"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

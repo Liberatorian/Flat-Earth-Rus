@@ -43,7 +43,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.FlatEarthAppState
-import com.example.model.CelestialModelMode
 import com.example.model.ViewMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,7 +50,6 @@ import com.example.model.ViewMode
 fun CosmosTopBar(
     state: FlatEarthAppState,
     onViewModeChange: (ViewMode) -> Unit,
-    onCelestialModelChange: (CelestialModelMode) -> Unit,
     onOpenLocationPicker: () -> Unit,
     onOpenLayers: () -> Unit,
     onOpenTheory: () -> Unit,
@@ -229,25 +227,14 @@ fun CosmosTopBar(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Модель:",
+                    text = "Модель: плоскоземельная гипотеза • купол и локальные светила",
                     color = Color(0xFF94A3B8),
-                    fontSize = 10.sp
-                )
-                ViewModeChip(
-                    label = "Научная механика",
-                    isSelected = state.celestialModel == CelestialModelMode.SCIENTIFIC,
-                    onClick = { onCelestialModelChange(CelestialModelMode.SCIENTIFIC) },
-                    modifier = Modifier.weight(1f)
-                )
-                ViewModeChip(
-                    label = "Купол / гипотеза",
-                    isSelected = state.celestialModel == CelestialModelMode.DOME_HYPOTHESIS,
-                    onClick = { onCelestialModelChange(CelestialModelMode.DOME_HYPOTHESIS) },
-                    modifier = Modifier.weight(1f)
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }

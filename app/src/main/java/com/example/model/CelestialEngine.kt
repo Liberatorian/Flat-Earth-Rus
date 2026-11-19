@@ -3,13 +3,10 @@ package com.example.model
 import java.util.Calendar
 import java.util.TimeZone
 import kotlin.math.PI
-import kotlin.math.acos
-import kotlin.math.asin
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
-import kotlin.math.tan
 
 data class CelestialTelemetry(
     // Time
@@ -108,13 +105,9 @@ object CelestialEngine {
     fun calculateState(
         timestampMillis: Long,
         observerCity: CityLocation,
-        physicalSettings: DomePhysicalSettings = DomePhysicalSettings(),
-        model: CelestialModelMode = CelestialModelMode.DOME_HYPOTHESIS
+        physicalSettings: DomePhysicalSettings = DomePhysicalSettings()
     ): CelestialTelemetry {
-        return when (model) {
-            CelestialModelMode.SCIENTIFIC -> calculateScientificState(timestampMillis, observerCity, physicalSettings)
-            CelestialModelMode.DOME_HYPOTHESIS -> calculateHypothesisState(timestampMillis, observerCity, physicalSettings)
-        }
+        return calculateHypothesisState(timestampMillis, observerCity, physicalSettings)
     }
 
     private fun calculateHypothesisState(
@@ -317,94 +310,6 @@ object CelestialEngine {
             moonApparentDiameterArcmin = moonDiameterArcmin,
             starDomeRotationDeg = siderealRotationDeg.toFloat()
         )
-    }
-
-    private fun calculateScientificState(
-        timestampMillis: Long,
-        observerCity: CityLocation,
-        physicalSettings: DomePhysicalSettings
-    ): CelestialTelemetry {
-        val hypothesis = calculateHypothesisState(timestampMillis, observerCity, physicalSettings)
-        val julianDays = timestampMillis / 86_400_000.0 + 2_440_587.5 - 2_451_545.0
-        val sun = solarEquatorialCoordinates(julianDays)
-        val (sunAlt, sunAz) = equatorialToHorizontal(
-            sun.first.toFloat(),
-            sun.second.toFloat(),
-            observerCity.latitude,
-            observerCity.longitude,
-            timestampMillis
-        )
-        val moonPhase = hypothesis.moonPhaseAngleDeg
-        val moonRa = normalizeHours(sun.first + moonPhase / 15.0)
-        val moonDec = (sun.second + 5.14 * sin(Math.toRadians(moonPhase * 2.0))).coerceIn(-28.5, 28.5)
-        val (moonAlt, moonAz) = equatorialToHorizontal(
-            moonRa.toFloat(),
-            moonDec.toFloat(),
-            observerCity.latitude,
-            observerCity.longitude,
-            timestampMillis
-        )
-        val sunDistanceAu = 1.00014 - 0.01671 * cos(Math.toRadians(357.529 + 0.98560028 * julianDays))
-        val sunDiameter = 31.99 / sunDistanceAu
-        val daylight = sunAlt > -0.833
-
-        return hypothesis.copy(
-            sunLatitude = sun.second,
-            sunLongitude = normalizeDegrees(sun.first * 15.0),
-            sunDiscRadiusKm = FlatEarthConstants.DISC_RADIUS_KM * 0.72,
-            sunAltitudeKm = sunDistanceAu * 149_597_870.7,
-            sunSpeedKmH = 107_200.0,
-            sunDiscX = cos(Math.toRadians(sun.first * 15.0)).toFloat().toDouble(),
-            sunDiscY = sin(Math.toRadians(sun.first * 15.0)).toFloat().toDouble(),
-            moonLatitude = moonDec,
-            moonLongitude = normalizeDegrees(moonRa * 15.0),
-            moonDiscRadiusKm = FlatEarthConstants.DISC_RADIUS_KM * 0.76,
-            moonAltitudeKm = 384_400.0,
-            moonDiscX = cos(Math.toRadians(moonRa * 15.0)).toFloat().toDouble(),
-            moonDiscY = sin(Math.toRadians(moonRa * 15.0)).toFloat().toDouble(),
-            isObserverDaytime = daylight,
-            sunGeometricAltitudeDeg = sunAlt,
-            sunApparentAltitudeDeg = applyStandardRefraction(sunAlt),
-            sunApparentAzimuthDeg = sunAz,
-            sunApparentDiameterArcmin = sunDiameter,
-            moonGeometricAltitudeDeg = moonAlt,
-            moonApparentAltitudeDeg = applyStandardRefraction(moonAlt),
-            moonApparentAzimuthDeg = moonAz,
-            moonApparentDiameterArcmin = 31.05,
-            observerDistanceToSunKm = sunDistanceAu * 149_597_870.7,
-            observerDistanceToMoonKm = 384_400.0,
-            starDomeRotationDeg = greenwichMeanSiderealTimeDegrees(timestampMillis).toFloat()
-        )
-    }
-
-    private fun solarEquatorialCoordinates(daysSinceJ2000: Double): Pair<Double, Double> {
-        val meanLongitude = normalizeDegrees(280.460 + 0.9856474 * daysSinceJ2000)
-        val meanAnomaly = Math.toRadians(normalizeDegrees(357.528 + 0.9856003 * daysSinceJ2000))
-        val eclipticLongitude = normalizeDegrees(
-            meanLongitude + 1.915 * sin(meanAnomaly) + 0.020 * sin(2.0 * meanAnomaly)
-        )
-        val obliquity = Math.toRadians(23.4393 - 3.563e-7 * daysSinceJ2000)
-        val longitude = Math.toRadians(eclipticLongitude)
-        val rightAscension = normalizeHours(
-            Math.toDegrees(atan2(cos(obliquity) * sin(longitude), cos(longitude))) / 15.0
-        )
-        val declination = Math.toDegrees(asin(sin(obliquity) * sin(longitude)))
-        return rightAscension to declination
-    }
-
-    private fun applyStandardRefraction(altitudeDeg: Double): Double {
-        if (altitudeDeg < -1.0 || altitudeDeg > 90.0) return altitudeDeg
-        val denominator = tan(Math.toRadians(altitudeDeg + 10.3 / (altitudeDeg + 5.11)))
-        val arcMinutes = 1.02 / denominator
-        return altitudeDeg + arcMinutes / 60.0
-    }
-
-    private fun normalizeDegrees(value: Double): Double {
-        return ((value % 360.0) + 360.0) % 360.0
-    }
-
-    private fun normalizeHours(value: Double): Double {
-        return ((value % 24.0) + 24.0) % 24.0
     }
 
     /**

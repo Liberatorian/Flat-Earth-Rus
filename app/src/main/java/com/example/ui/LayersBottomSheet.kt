@@ -167,8 +167,8 @@ fun LayersBottomSheet(
             LayerToggleRow(
                 label = "Показывать допущения модели",
                 description = "Отмечает проекцию, масштабирование и нестандартную оптику",
-                checked = layers.showScientificAssumptions,
-                onCheckedChange = { onToggleLayer { copy(showScientificAssumptions = it) } }
+                checked = layers.showModelAssumptions,
+                onCheckedChange = { onToggleLayer { copy(showModelAssumptions = it) } }
             )
 
             Spacer(modifier = Modifier.height(16.dp))

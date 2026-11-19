@@ -6,7 +6,6 @@ import com.example.model.OpticsEngine
 import com.example.model.FlatEarthConstants
 import com.example.model.PRESET_CITIES
 import com.example.model.FlatEarthAppState
-import com.example.model.CelestialModelMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -89,11 +88,21 @@ class CelestialEngineTest {
     }
 
     @Test
-    fun crownCurveDomeFallsToRimAndHasAlternatingRibs() {
+    fun paraboloidDomeHasExpectedApexRimAndAxisymmetricProfile() {
+        assertEquals(FlatEarthConstants.DOME_ZENITH_HEIGHT_KM, FlatEarthConstants.domeHeightAtRadiusKm(0.0), 0.001)
         assertEquals(0.0, FlatEarthConstants.domeHeightAtRadiusKm(1.0), 0.001)
-        val firstRib = FlatEarthConstants.domeHeightAtRadiusKm(0.5, 0.0)
-        val secondRib = FlatEarthConstants.domeHeightAtRadiusKm(0.5, Math.PI / 14.0)
-        assertTrue(firstRib != secondRib)
+        assertEquals(7_875.0, FlatEarthConstants.domeHeightAtRadiusKm(0.5), 0.001)
+        assertTrue(FlatEarthConstants.domeHeightAtRadiusKm(0.5) > FlatEarthConstants.domeHeightAtRadiusKm(0.75))
+    }
+
+    @Test
+    fun paraboloidContainsModelLuminariesAtOuterSolsticeRadius() {
+        val outerOrbitRadiusNorm = FlatEarthConstants.TROPIC_CAPRICORN_KM / FlatEarthConstants.DISC_RADIUS_KM
+        val domeHeight = FlatEarthConstants.domeHeightAtRadiusKm(outerOrbitRadiusNorm)
+
+        assertTrue(domeHeight > FlatEarthConstants.SUN_ALTITUDE_KM)
+        assertTrue(domeHeight > FlatEarthConstants.MOON_ALTITUDE_KM)
+        assertEquals(6_332.55, domeHeight, 0.01)
     }
 
     @Test
@@ -145,17 +154,12 @@ class CelestialEngineTest {
     }
 
     @Test
-    fun scientificModelUsesLocalHorizontalCoordinatesAndStableSolarDiameter() {
-        val telemetry = CelestialEngine.calculateState(
-            1_700_000_000_000L,
-            PRESET_CITIES[0],
-            model = CelestialModelMode.SCIENTIFIC
-        )
+    fun singleAvailableModelUsesHypothesisLuminaryHeights() {
+        val telemetry = CelestialEngine.calculateState(1_700_000_000_000L, PRESET_CITIES[0])
 
-        assertTrue(telemetry.sunGeometricAltitudeDeg in -90.0..90.0)
-        assertTrue(telemetry.sunApparentAzimuthDeg in 0.0..360.0)
-        assertTrue(telemetry.sunApparentDiameterArcmin in 30.0..34.0)
-        assertEquals(384_400.0, telemetry.observerDistanceToMoonKm, 0.1)
+        assertEquals(FlatEarthConstants.SUN_ALTITUDE_KM, telemetry.sunAltitudeKm, 0.0)
+        assertEquals(FlatEarthConstants.MOON_ALTITUDE_KM, telemetry.moonAltitudeKm, 0.0)
+        assertTrue(telemetry.observerDistanceToMoonKm >= telemetry.moonAltitudeKm)
     }
 
     private fun signedLongitudeDelta(first: Double, second: Double): Double {

@@ -32,7 +32,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.example.model.FlatEarthViewModel
-import com.example.model.CelestialModelMode
 import com.example.model.ViewMode
 
 @Composable
@@ -109,7 +108,6 @@ fun FlatEarthCosmosApp(
             CosmosTopBar(
                 state = state,
                 onViewModeChange = { viewModel.setViewMode(it) },
-                onCelestialModelChange = { viewModel.setCelestialModel(it) },
                 onOpenLocationPicker = { viewModel.setShowLocationPicker(true) },
                 onOpenLayers = { viewModel.setShowSettingsSheet(true) },
                 onOpenTheory = { viewModel.setShowTheoryDialog(true) }
@@ -122,7 +120,6 @@ fun FlatEarthCosmosApp(
             Column(modifier = Modifier.fillMaxWidth()) {
                 TelemetryDetailCard(
                     telemetry = state.telemetry,
-                    model = state.celestialModel,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )
 
@@ -152,17 +149,10 @@ fun FlatEarthCosmosApp(
         ) {
             when (state.viewMode) {
                 ViewMode.DOME_3D -> {
-                    if (state.celestialModel == CelestialModelMode.SCIENTIFIC) {
-                        ScientificSystemView(
-                            state = state,
-                            onCameraDelta = { pitch, yaw -> viewModel.updateCamera3D(pitch, yaw) }
-                        )
-                    } else {
-                        Dome3DView(
-                            state = state,
-                            onCameraDelta = { pitch, yaw -> viewModel.updateCamera3D(pitch, yaw) }
-                        )
-                    }
+                    Dome3DView(
+                        state = state,
+                        onCameraDelta = { pitch, yaw -> viewModel.updateCamera3D(pitch, yaw) }
+                    )
                 }
 
                 ViewMode.OBSERVER_SKY -> {
