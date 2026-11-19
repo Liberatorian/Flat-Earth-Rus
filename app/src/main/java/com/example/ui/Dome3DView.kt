@@ -423,10 +423,10 @@ private fun DrawScope.drawCrystallineDome(
     project: (Double, Double, Double) -> Offset
 ) {
     val domeHeightNorm = FlatEarthConstants.DOME_ZENITH_HEIGHT_KM / FlatEarthConstants.DISC_RADIUS_KM // ~0.325
-    val rimHeightNorm = FlatEarthConstants.DOME_RIM_HEIGHT_KM / FlatEarthConstants.DISC_RADIUS_KM
 
     // Meridian Dome Ribs (transparent crystal arches from North Pole zenith to Ice Rim)
-    val ribs = 8
+    // Seven alternating ribs echo the tent-like Crown-Curve construction.
+    val ribs = 7
     val steps = 30
     for (r in 0 until ribs) {
         val ribAngle = r * (PI / ribs)
@@ -435,8 +435,9 @@ private fun DrawScope.drawCrystallineDome(
         for (i in -steps..steps) {
             val t = i.toDouble() / steps // -1.0 .. +1.0
             val rad = kotlin.math.abs(t)
-            // Parabolic dome curvature: z = H_rim + (H_zenith - H_rim) * (1 - rad^2)
-            val z = rimHeightNorm + (domeHeightNorm - rimHeightNorm) * (1.0 - rad * rad)
+            val azimuth = if (t < 0.0) ribAngle + PI else ribAngle
+            val z = FlatEarthConstants.domeHeightAtRadiusKm(rad, azimuth) /
+                FlatEarthConstants.DISC_RADIUS_KM
             val x = t * sin(ribAngle)
             val y = t * cos(ribAngle)
 
@@ -452,15 +453,16 @@ private fun DrawScope.drawCrystallineDome(
     }
 
     // Latitude rings on the Dome
-    val rings = listOf(0.3, 0.6, 0.85)
+    val rings = listOf(0.28, 0.55, 0.78, 0.92)
     for (radiusNorm in rings) {
         val ringPath = Path()
-        val z = rimHeightNorm + (domeHeightNorm - rimHeightNorm) * (1.0 - radiusNorm * radiusNorm)
         val circleSteps = 48
         for (i in 0..circleSteps) {
             val a = i * (2.0 * PI / circleSteps)
             val x = radiusNorm * sin(a)
             val y = radiusNorm * cos(a)
+            val z = FlatEarthConstants.domeHeightAtRadiusKm(radiusNorm, a) /
+                FlatEarthConstants.DISC_RADIUS_KM
             val pt = project(x, y, z)
             if (i == 0) ringPath.moveTo(pt.x, pt.y) else ringPath.lineTo(pt.x, pt.y)
         }
@@ -517,8 +519,6 @@ private fun DrawScope.drawStarDome(
     state: FlatEarthAppState,
     project: (Double, Double, Double) -> Offset
 ) {
-    val domeHeightNorm = FlatEarthConstants.DOME_ZENITH_HEIGHT_KM / FlatEarthConstants.DISC_RADIUS_KM
-    val rimHeightNorm = FlatEarthConstants.DOME_RIM_HEIGHT_KM / FlatEarthConstants.DISC_RADIUS_KM
     val rotationRad = Math.toRadians(state.telemetry.starDomeRotationDeg.toDouble())
 
     // Cache star screen positions for constellation lines
@@ -537,7 +537,8 @@ private fun DrawScope.drawStarDome(
         val starHourAngle = (star.rightAscensionHours / 24.0 * 2.0 * PI) - rotationRad
         val x = starRadNorm * sin(starHourAngle)
         val y = starRadNorm * cos(starHourAngle)
-        val z = rimHeightNorm + (domeHeightNorm - rimHeightNorm) * (1.0 - starRadNorm * starRadNorm)
+        val z = FlatEarthConstants.domeHeightAtRadiusKm(starRadNorm, starHourAngle) /
+            FlatEarthConstants.DISC_RADIUS_KM
 
         val pt = project(x, y, z)
         starScreenPos[star.name] = pt
@@ -564,7 +565,8 @@ private fun DrawScope.drawStarDome(
         val radial = 0.08 + ((index * 73) % 860) / 1000.0
         val x = radial * sin(angle - rotationRad)
         val y = radial * cos(angle - rotationRad)
-        val z = rimHeightNorm + (domeHeightNorm - rimHeightNorm) * (1.0 - radial * radial)
+        val z = FlatEarthConstants.domeHeightAtRadiusKm(radial, angle - rotationRad) /
+            FlatEarthConstants.DISC_RADIUS_KM
         val pt = project(x, y, z)
         val radius = if (index % 17 == 0) 1.8f else 0.9f
         drawCircle(Color(0xB8E0F2FF), radius, pt)

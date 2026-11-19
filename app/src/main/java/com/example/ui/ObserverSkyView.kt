@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.CONSTELLATION_LINES
 import com.example.model.CelestialEngine
+import com.example.model.CelestialModelMode
 import com.example.model.FlatEarthAppState
 import com.example.model.MAJOR_STARS
 import com.example.ui.theme.MoonSilver
@@ -201,7 +202,11 @@ fun ObserverSkyView(
             ) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                 Text(
-                    text = "ВИД С ТВЕРДИ • ${state.observerLocation.nameRu}",
+                    text = if (state.celestialModel == CelestialModelMode.SCIENTIFIC) {
+                        "НАБЛЮДАТЕЛЬ • ${state.observerLocation.nameRu}"
+                    } else {
+                        "ВИД С ТВЕРДИ • ${state.observerLocation.nameRu}"
+                    },
                     color = Color(0xFF38BDF8),
                     fontSize = 12.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
@@ -235,7 +240,11 @@ fun ObserverSkyView(
                 }
                 if (state.layers.showScientificAssumptions) {
                     Text(
-                        text = "Допущение: азимутальная равноудалённая проекция",
+                        text = if (state.celestialModel == CelestialModelMode.SCIENTIFIC) {
+                            "Модель: экваториальные координаты + местный горизонт"
+                        } else {
+                            "Допущение: азимутальная равноудалённая проекция"
+                        },
                         color = Color(0xFFFBBF24),
                         fontSize = 9.sp
                     )

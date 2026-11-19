@@ -35,10 +35,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.CelestialTelemetry
+import com.example.model.CelestialModelMode
 
 @Composable
 fun TelemetryDetailCard(
     telemetry: CelestialTelemetry,
+    model: CelestialModelMode = CelestialModelMode.SCIENTIFIC,
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -134,9 +136,9 @@ fun TelemetryDetailCard(
                             items = listOf(
                                 "Подсолнечная шир." to String.format("%.2f°", telemetry.sunLatitude),
                                 "Подсолнечная долг." to String.format("%.2f°", telemetry.sunLongitude),
-                                "Радиус от полюса" to "${telemetry.sunDiscRadiusKm.toInt()} км",
+                                (if (model == CelestialModelMode.SCIENTIFIC) "Радиус схемы" else "Радиус от полюса") to "${telemetry.sunDiscRadiusKm.toInt()} км",
                                 "Орбитальная скорость" to "${telemetry.sunSpeedKmH.toInt()} км/ч",
-                                "Высота над твердью" to "${telemetry.sunAltitudeKm.toInt()} км",
+                                (if (model == CelestialModelMode.SCIENTIFIC) "Расстояние до Солнца" else "Высота над твердью") to "${telemetry.sunAltitudeKm.toInt()} км",
                                 "Видимый диаметр" to String.format("%.1f'", telemetry.sunApparentDiameterArcmin)
                             )
                         )
@@ -151,7 +153,7 @@ fun TelemetryDetailCard(
                                 "Возраст Луны" to String.format("%.1f дн.", telemetry.moonAgeDays),
                                 "Подлунная шир." to String.format("%.2f°", telemetry.moonLatitude),
                                 "Подлунная долг." to String.format("%.2f°", telemetry.moonLongitude),
-                                "Высота светила" to "${telemetry.moonAltitudeKm.toInt()} км"
+                                (if (model == CelestialModelMode.SCIENTIFIC) "Расстояние до Луны" else "Высота светила") to "${telemetry.moonAltitudeKm.toInt()} км"
                             )
                         )
                     }

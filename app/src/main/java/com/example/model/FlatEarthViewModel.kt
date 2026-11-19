@@ -16,6 +16,11 @@ enum class ViewMode {
     GLEASON_2D // Top-down 2D Gleason Azimuthal Equidistant cartographic projection
 }
 
+enum class CelestialModelMode {
+    SCIENTIFIC,
+    DOME_HYPOTHESIS
+}
+
 enum class MapProjection {
     GLEASON_AE, // Standard Azimuthal Equidistant
     STEREOGRAPHIC, // Conformal Polar Stereographic
@@ -61,6 +66,7 @@ data class FlatEarthAppState(
     val isPlaying: Boolean = true,
     val timeSpeedMultiplier: Double = 1.0, // Real-time start; accelerated modes remain available
     val viewMode: ViewMode = ViewMode.DOME_3D,
+    val celestialModel: CelestialModelMode = CelestialModelMode.SCIENTIFIC,
     val projection: MapProjection = MapProjection.GLEASON_AE,
     val observerLocation: CityLocation = PRESET_CITIES[0], // Moscow default
     val layers: LayerSettings = LayerSettings(),
@@ -69,7 +75,8 @@ data class FlatEarthAppState(
     val observerCamera: ObserverCamera = ObserverCamera(),
     val telemetry: CelestialTelemetry = CelestialEngine.calculateState(
         System.currentTimeMillis(),
-        PRESET_CITIES[0]
+        PRESET_CITIES[0],
+        model = CelestialModelMode.SCIENTIFIC
     ),
     val showTheoryDialog: Boolean = false,
     val showReferenceDialog: Boolean = false,
@@ -108,7 +115,8 @@ class FlatEarthViewModel : ViewModel() {
 
                     val updatedTelemetry = CelestialEngine.calculateState(
                         newTimestamp,
-                        state.observerLocation
+                        state.observerLocation,
+                        model = state.celestialModel
                     )
 
                     state.copy(
@@ -122,6 +130,19 @@ class FlatEarthViewModel : ViewModel() {
 
     fun setViewMode(mode: ViewMode) {
         _uiState.update { it.copy(viewMode = mode) }
+    }
+
+    fun setCelestialModel(model: CelestialModelMode) {
+        _uiState.update {
+            it.copy(
+                celestialModel = model,
+                telemetry = CelestialEngine.calculateState(
+                    it.currentTimestampMillis,
+                    it.observerLocation,
+                    model = model
+                )
+            )
+        }
     }
 
     fun setProjection(proj: MapProjection) {
@@ -156,7 +177,11 @@ class FlatEarthViewModel : ViewModel() {
 
     fun setTimestamp(millis: Long) {
         _uiState.update {
-            val updatedTelemetry = CelestialEngine.calculateState(millis, it.observerLocation)
+            val updatedTelemetry = CelestialEngine.calculateState(
+                millis,
+                it.observerLocation,
+                model = it.celestialModel
+            )
             it.copy(
                 currentTimestampMillis = millis,
                 isRealTime = false,
@@ -175,7 +200,11 @@ class FlatEarthViewModel : ViewModel() {
 
     fun selectObserverLocation(city: CityLocation) {
         _uiState.update {
-            val updatedTelemetry = CelestialEngine.calculateState(it.currentTimestampMillis, city)
+            val updatedTelemetry = CelestialEngine.calculateState(
+                it.currentTimestampMillis,
+                city,
+                model = it.celestialModel
+            )
             it.copy(
                 observerLocation = city,
                 telemetry = updatedTelemetry,

@@ -5,6 +5,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.pow
 
 /**
  * Constants and mathematical formulas for the Flat Earth celestial model.
@@ -32,9 +33,17 @@ object FlatEarthConstants {
     const val SUN_SPOTLIGHT_RADIUS_KM = 9600.0 // Daytime spotlight illumination radius
     const val TWILIGHT_BUFFER_KM = 1800.0 // Penumbra / twilight transition zone
 
-    fun domeHeightAtRadiusKm(radiusNorm: Double): Double {
+    /**
+     * Crown-Curve tent profile used by the hypothesis renderer.
+     * The exponent keeps the inner canopy high while the outer wall falls
+     * sharply toward the rim, unlike the previous hemispherical parabola.
+     */
+    fun domeHeightAtRadiusKm(radiusNorm: Double, azimuthRad: Double = 0.0): Double {
         val radius = radiusNorm.coerceIn(0.0, 1.0)
-        return DOME_RIM_HEIGHT_KM + (DOME_ZENITH_HEIGHT_KM - DOME_RIM_HEIGHT_KM) * (1.0 - radius * radius)
+        val tentProfile = 1.0 - radius.pow(1.75)
+        val crownRib = 0.035 * sin(7.0 * azimuthRad) * radius * (1.0 - radius)
+        val normalizedHeight = (tentProfile + crownRib).coerceIn(0.0, 1.0)
+        return DOME_RIM_HEIGHT_KM + (DOME_ZENITH_HEIGHT_KM - DOME_RIM_HEIGHT_KM) * normalizedHeight
     }
 }
 
